@@ -1,0 +1,3156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Custas Extrajudiciais - TJRO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script
+  src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.6.2/dist/dotlottie-wc.js"
+  type="module"
+></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
+    <style>
+:root {
+    --primary-color: #1e63b3;
+    --primary-color-dark: #124a8a;
+    --primary-color-light: #f0f6ff;
+    --secondary-color: #4a5568;
+    --light-gray: #f7fafc;
+    --medium-gray: #e2e8f0;
+    --dark-gray: #2d3748;
+    --text-color: #2d3748;
+    --white: #fff;
+    --danger-color: #e53e3e;
+    --success-color: #38a169;
+    --warning-color: #dd6b20;
+    --border-color: #cbd5e0;
+    --border-radius: 0.5rem; /* 8px */
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+    --box-shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --transition-speed: 0.2s;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--light-gray);
+    color: var(--text-color);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 2rem auto;
+    background-color: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-lg);
+    overflow: hidden;
+}
+
+header {
+    background: var(--dark-gray);
+    color: var(--white);
+    padding: 2.5rem;
+    text-align: center;
+}
+
+header h1 {
+    margin-bottom: 0.5rem;
+    font-size: 2.25rem;
+    font-weight: 700;
+}
+
+header p {
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+
+.main-content {
+    display: grid;
+    grid-template-columns: minmax(500px, 1.3fr) 1.7fr;
+    min-height: 80vh;
+}
+
+.input-section, .budget-section {
+    padding: 2.5rem;
+}
+
+.input-section {
+    background-color: var(--white);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.input-section > h2 {
+    font-size: 1.6rem;
+    margin-bottom: 1.5rem;
+    color: var(--dark-gray);
+    font-weight: 600;
+}
+
+/* NOVO VISUAL DE ABAS */
+.tabs {
+    display: flex;
+    border-bottom: 2px solid var(--medium-gray);
+    margin-bottom: 2rem;
+}
+
+.tab-link {
+    padding: 0.8rem 1.2rem;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--secondary-color);
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+    margin-bottom: -2px;
+}
+
+.tab-link:hover {
+    color: var(--primary-color);
+}
+
+.tab-link.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    font-weight: 600;
+}
+
+.tab-content { display: none; animation: fadeIn 0.4s; }
+.tab-content.active { display: block; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* SEÇÃO DE ORÇAMENTO MELHORADA */
+.budget-section {
+    background-color: var(--light-gray);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    max-height: 100vh;
+    overflow-y: auto;
+}
+
+.budget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.budget-header h2 {
+    font-size: 1.75rem;
+    color: var(--dark-gray);
+    font-weight: 600;
+}
+
+#budget-placeholder {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--secondary-color);
+    border: 2px dashed var(--medium-gray);
+    border-radius: var(--border-radius);
+    background-color: var(--white);
+    margin-top: 1.5rem;
+    transition: all var(--transition-speed);
+}
+#budget-items-container {
+    margin-top: 1.5rem;
+}
+
+#budget-items-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.75rem;
+}
+#budget-items-table thead { display: none; }
+#budget-items-table th, #budget-items-table td { padding: 1rem 1.25rem; vertical-align: middle; }
+#budget-items-table .actions-col { width: 1%; padding: 0.5rem; white-space: nowrap; }
+
+.item-row {
+    background-color: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.item-row:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow);
+}
+.details-row { display: none; }
+.details-row > td { padding: 0; }
+.details-content {
+    background-color: #f8f9fa;
+    padding: 1rem 1.25rem;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    border-top: 1px solid var(--medium-gray);
+}
+.details-content table { width: 100%; font-size: 0.9rem; }
+.details-content table td { padding: 0.4rem 0; }
+.details-content .item-value { text-align: right; }
+.item-description { font-weight: 500; }
+.item-value { text-align: right; font-weight: 600; font-size: 1.05rem; }
+
+#summary-table {
+    margin-top: 1.5rem;
+    background-color: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    width: 100%;
+    border-collapse: collapse;
+}
+.summary-total td {
+    padding: 1.25rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    border-top: 3px solid var(--primary-color);
+}
+.summary-total td:first-child { color: var(--dark-gray); }
+
+/* FORMULÁRIOS MODERNIZADOS */
+.form-group { margin-bottom: 1.25rem; }
+.form-group-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--secondary-color); }
+input[type="text"], input[type="number"], select {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-family: var(--font-family);
+    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+    background-color: var(--white);
+}
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(30, 99, 179, 0.2);
+}
+select:disabled { background-color: var(--medium-gray); cursor: not-allowed; opacity: 0.7; }
+.checkbox-group { display: flex; align-items: center; gap: 0.75rem; }
+.checkbox-group input[type="checkbox"],
+.checkbox-group input[type="radio"] { width: 1.1em; height: 1.1em; accent-color: var(--primary-color); }
+.checkbox-group label { margin-bottom: 0; font-weight: 500; color: var(--text-color); }
+
+/* BOTÕES APRIMORADOS */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.8rem 1.6rem; font-size: 1rem; font-weight: 600; border-radius: var(--border-radius); border: 1px solid transparent; cursor: pointer; text-align: center; transition: all 0.2s ease-in-out; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.btn:active { transform: translateY(0); box-shadow: none; }
+.btn-primary { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%); color: var(--white); width: 100%; }
+.btn-primary:hover { background: linear-gradient(135deg, var(--primary-color-dark) 0%, #0e3b75 100%); }
+.btn-success { background-color: var(--success-color); color: var(--white); }
+.btn-success:hover { background-color: #2f855a; }
+.btn-print { background-color: var(--secondary-color); color: var(--white); }
+.btn-print:hover { background-color: var(--dark-gray); }
+.btn-danger { background-color: var(--danger-color); color: var(--white); }
+.btn-danger:hover { background-color: #c53030; }
+.btn-danger-outline { background-color: transparent; color: var(--danger-color); border-color: var(--danger-color); }
+.btn-danger-outline:hover { background-color: var(--danger-color); color: var(--white); }
+.btn-add-discreet { background-color: transparent; border: 2px dashed var(--medium-gray); color: var(--secondary-color); font-weight: 500; }
+.btn-add-discreet:hover { background-color: var(--primary-color-light); color: var(--primary-color); border-color: var(--primary-color); box-shadow: none; }
+.btn-icon { background: transparent; border: none; cursor: pointer; color: #a0aec0; padding: 0.35rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s; }
+.btn-icon:hover { color: var(--primary-color); background-color: var(--primary-color-light); }
+.btn-icon svg { width: 18px; height: 18px; }
+
+/* TAGS DOS ITENS */
+.item-tags-container { margin-top: 6px; }
+.item-tag { display: inline-flex; align-items: center; gap: 0.3em; padding: 4px 10px; font-size: 0.75rem; font-weight: 500; border-radius: 9999px; margin-right: 6px; margin-top: 4px; }
+.tag-identifier { background-color: #edf2f7; color: #4a5568; }
+.tag-base-value { background-color: #ebf8ff; color: #2c5282; }
+.tag-usufruct { background-color: #fff5f5; color: #c53030; }
+.tag-evaluation { background-color: #f0fff4; color: #2f855a; }
+.tag-meacao { background-color: #fffaf0; color: #dd6b20; }
+.tag-type-escritura { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-weight: 600; }
+.tag-type-registro { background-color: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; font-weight: 600; }
+.tag-type-itcmd { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-weight: 600; }
+
+/* OUTROS COMPONENTES */
+.inventory-asset-row { background: var(--light-gray); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.25rem; margin-bottom: 1rem; display: flex; flex-direction: column; position: relative; animation: fadeIn 0.3s; }
+.inventory-asset-row .remove-asset-btn { position: absolute; top: 0.5rem; right: 0.5rem; }
+#incra-result-container { margin-top: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, var(--success-color) 0%, #2f855a 100%); color: var(--white); border-radius: var(--border-radius); text-align: center; }
+
+/* MODAIS */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; z-index: 1000; backdrop-filter: blur(4px); }
+.modal-overlay.show { opacity: 1; visibility: visible; }
+.modal-box { background: var(--white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--box-shadow-lg); width: 90%; max-width: 500px; transform: translateY(-20px) scale(0.95); transition: transform 0.3s ease-out; }
+.modal-overlay.show .modal-box { transform: translateY(0) scale(1); }
+.modal-box h4 { font-size: 1.25rem; margin-bottom: 0.5rem; color: var(--dark-gray); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
+.btn-secondary { background-color: var(--secondary-color); color: var(--white); }
+.btn-secondary:hover { background-color: var(--dark-gray); }
+.btn-cancel { background-color: transparent; color: var(--secondary-color); border: 1px solid var(--border-color); }
+.btn-cancel:hover { background-color: var(--medium-gray); box-shadow: none; }
+
+/* RODAPÉ */
+footer { text-align: center; padding: 2rem; background-color: var(--dark-gray); color: #a0aec0; font-size: 0.9rem; }
+.author-credit { display: block; margin-top: 0.5rem; opacity: 0.7; }
+
+
+/* ESTILO PARA O GUIA DO USUÁRIO */
+.guide-content {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 1rem; /* Espaço para a barra de rolagem */
+    text-align: left;
+    line-height: 1.7;
+}
+.guide-content h5 {
+    font-size: 1.1rem;
+    color: var(--primary-color-dark);
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 2px solid var(--medium-gray);
+}
+.guide-content p, .guide-content li {
+    color: var(--secondary-color);
+    margin-bottom: 0.5rem;
+}
+.guide-content code {
+    background-color: var(--medium-gray);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+.guide-content ul {
+    padding-left: 20px;
+}
+.guide-content strong {
+    color: var(--dark-gray);
+}
+
+
+/* ESTILOS DE IMPRESSÃO */
+@media print {
+    body { padding: 0; background-color: var(--white); font-size: 10pt; }
+    .no-print, header, footer, .input-section, .budget-header .btn, #budgeter-name-group, .btn-icon, .actions-col { display: none !important; }
+    #print-header-info { display: block !important; padding-bottom: 1rem; border-bottom: 2px solid var(--dark-gray); margin-bottom: 1.5rem; }
+    .container { box-shadow: none; max-width: 100%; margin: 0; }
+    .main-content { display: block; }
+    .budget-section { border: none; padding: 1rem; background-color: var(--white); }
+    #budget-items-table { border-spacing: 0 0; }
+    .item-row { box-shadow: none; border-radius: 0; border-bottom: 1px solid #ccc; }
+    .item-row:hover { transform: none; }
+    body.print-simplified .details-row, body.print-simplified .details-toggle-btn { display: none !important; }
+}
+
+/* RESPONSIVIDADE */
+@media (max-width: 1200px) {
+    .main-content { grid-template-columns: 1fr; }
+    .input-section { border-right: none; border-bottom: 2px solid var(--border-color); }
+}
+@media (max-width: 768px) {
+    .container { margin: 1rem; }
+    header, .input-section, .budget-section { padding: 1.5rem; }
+    .tabs { gap: 0.2rem; }
+    .tab-link { padding: 0.7rem 0.6rem; font-size: 0.85rem; }
+    .modal-actions { flex-direction: column; }
+    .modal-actions .btn { width: 100%; }
+
+    /* Faz os campos de formulário que ficavam lado a lado empilharem verticalmente */
+    .form-group-inline, 
+    .inventory-asset-row {
+        grid-template-columns: 1fr;
+    }
+
+    /* Permite que as abas quebrem a linha se não couberem na tela */
+    .tabs {
+        flex-wrap: wrap;
+    }
+
+    /* Reduz o tamanho do título principal em telas pequenas */
+    header h1 {
+        font-size: 1.75rem;
+    }
+
+    /* Ajusta o layout principal para telas muito estreitas, se necessário */
+    .main-content {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    
+    /* --- INÍCIO DA CORREÇÃO PARA O ORÇAMENTO EM CELULAR --- */
+
+    /* Transforma a linha da tabela em um container flexível que quebra a linha */
+    #budget-items-table .item-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.25rem;
+    }
+
+    #budget-items-table .item-description {
+        width: 100%;
+        padding: 0 0 0.5rem 0;
+        text-align: left;
+    }
+
+    #budget-items-table .item-value {
+        padding: 0;
+        text-align: left;
+        font-size: 1.15rem;
+        font-weight: 700;
+        flex-grow: 1; 
+    }
+
+    /* Nova regra para o container dos botões */
+    #budget-items-table .actions-col-wrapper {
+        padding: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem; /* Espaçamento entre os botões */
+    }
+
+    /* Remove a regra antiga que não é mais necessária */
+    #budget-items-table .actions-col {
+       padding: 0.5rem; /* Restaura o padding original para a versão desktop */
+    }
+
+    /* --- FIM DA CORREÇÃO --- */
+}
+    .ranking-row { cursor: pointer; transition: filter 0.2s; }
+    .ranking-row:hover { filter: brightness(0.95); }
+    
+    /* Stepper Numérico */
+    .stepper-wrapper {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        overflow: hidden;
+        background: #fff;
+    }
+    .btn-stepper {
+        background: #f8f9fa;
+        border: none;
+        padding: 0.5rem 0.8rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: var(--dark-gray);
+        cursor: pointer;
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+    }
+    .btn-stepper:hover { background: #e2e8f0; }
+    .stepper-wrapper input[type="number"] {
+        border: none;
+        border-left: 1px solid var(--border-color);
+        border-right: 1px solid var(--border-color);
+        border-radius: 0;
+        text-align: center;
+        width: 60px;
+        padding: 0.5rem;
+        margin: 0;
+        -moz-appearance: textfield;
+    }
+    .stepper-wrapper input::-webkit-outer-spin-button,
+    .stepper-wrapper input::-webkit-inner-spin-button {
+        -webkit-appearance: none; margin: 0;
+    }
+    
+    /* Fast Money */
+    .btn-fast-money { 
+        background: #e2e8f0; 
+        border: none; 
+        border-radius: 4px; 
+        padding: 2px 6px; 
+        font-size: 0.7rem; 
+        color: var(--primary-color); 
+        cursor: pointer; 
+        font-weight: bold; 
+        margin-left: 4px; 
+        transition: background 0.2s;
+    }
+    .btn-fast-money:hover { background: #cbd5e1; }
+</style>
+<!-- css removido pois não existe index.css -->
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Calculadora de Custas Extrajudiciais - TJRO</h1>
+            <p>Tribunal de Justiça de Rondônia (Tabela 2026)</p>
+        </header>
+
+        <main class="main-content">
+            <section class="input-section">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h2 style="margin: 0;">Adicionar Ato ao Orçamento</h2>
+    <button id="open-guide-btn" class="btn-icon no-print" title="Abrir Guia do Usuário">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+            <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
+        </svg>
+    </button>
+</div>
+    
+    <div class="input-panel">
+        <div class="tabs">
+            <button class="tab-link active" data-tab="tab-variavel">Valor Variável</button>
+            <button class="tab-link" data-tab="tab-fixo">Valor Fixo</button>
+            <button class="tab-link" data-tab="tab-inventario">Inventário</button>
+            <button class="tab-link" data-tab="tab-manual">Manual</button>
+            <button class="tab-link" data-tab="tab-incra">INCRA</button>
+            <button class="tab-link" data-tab="tab-itcmd-avulso">ITCMD Avulso</button>
+        </div>
+
+        <div class="tab-contents-wrapper">
+            <!-- O conteúdo de todas as suas abas (tab-content) continua aqui dentro, exatamente como estava antes -->
+            <!-- Tab Variável -->
+            <div id="tab-variavel" class="tab-content active">
+                <div class="form-group">
+                    <label for="ato-variavel">Tipo de Ato</label>
+                    <select id="ato-variavel"></select>
+                </div>
+                <div class="form-group">
+                    <label for="descricao-variavel">Identificação do Ato (Opcional)</label>
+                    <input type="text" id="descricao-variavel" placeholder="Ex: Lote 101, Apto 10">
+                </div>
+                <div class="form-group">
+                    <label for="valor-ato" style="display: flex; justify-content: space-between;">
+                        Valor do Ato/Imóvel (R$)
+                        <span class="fast-money-container">
+                            <button type="button" class="btn-fast-money" data-add="50000">+50k</button>
+                            <button type="button" class="btn-fast-money" data-add="100000">+100k</button>
+                            <button type="button" class="btn-fast-money" data-add="500000">+500k</button>
+                        </span>
+                    </label>
+                    <input type="text" id="valor-ato" placeholder="150.000,00">
+                </div>
+
+                <div id="construction-subtool-container" class="form-group" style="display: none;">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="is-construction-checkbox">
+                        <label for="is-construction-checkbox">É averbação de construção?</label>
+                    </div>
+                    <div id="construction-fields" style="display: none; border: 1px solid #e0e0e0; padding: 1rem; margin-top: 1rem; border-radius: 6px; background-color: #f8f9fa;">
+                        <p style="font-size: 0.9rem; color: #6c757d; margin-bottom: 1rem; text-align: center;">Calcule o valor da obra para usar como base de cálculo.</p>
+                        <div class="form-group">
+                            <label for="construction-type">Tipo de Construção</label>
+                            <select id="construction-type">
+                                <option value="residencial">Residencial (R-8 Normal)</option>
+                                <option value="comercial">Comercial (CSL-8 Normal)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="construction-area">Área da construção (m²)</label>
+                            <input type="number" id="construction-area" placeholder="Ex: 120">
+                        </div>
+                        <div class="form-group">
+                            <label for="construction-cub">Valor do CUB/m² (R$) 
+                                <a href="https://sindusconro.com.br/home/?page_id=378" target="_blank" title="Consultar CUB no SINDUSCON/RO">(Consultar Tabela)</a>
+                            </label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="construction-cub" placeholder="Ex: 2.500,00" style="flex-grow: 1;">
+                                <button id="fetch-cub-btn" class="btn btn-primary" title="Buscar automaticamente do Sinduscon" style="padding: 0 1rem; flex-shrink: 0; width: auto;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                      <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                      <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                                    </svg>
+                                    Buscar CUB
+                                </button>
+                            </div>
+                            <small id="fetch-cub-status" style="display: none; color: var(--secondary-color); margin-top: 0.5rem;"></small>
+                        </div>
+                        <button id="calculate-construction-value" class="btn btn-secondary" style="width: 100%; margin-bottom: 1rem;">Calcular e Preencher Valor da Obra</button>
+                        <div id="construction-result" style="text-align: center; font-weight: bold; color: var(--primary-color-dark);"></div>
+                    </div>
+                </div>
+                
+                <div id="natureza-ato-panel" class="form-group" style="display: none;">
+<label>Natureza do Ato</label>
+<div style="border: 1px solid #e0e0e0; padding: 0.75rem; border-radius: 6px; background-color: #f9f9f9;">
+<div class="checkbox-group" style="margin-bottom: 0.5rem;">
+    <input type="radio" id="natureza_padrao" name="ato_natureza" value="padrao" checked>
+    <label for="natureza_padrao" style="font-weight: 500;">Ato Padrão (Valor integral)</label>
+</div>
+<div class="checkbox-group" style="margin-bottom: 0.5rem;">
+    <input type="radio" id="natureza_composto" name="ato_natureza" value="composto">
+    <label for="natureza_composto" style="font-weight: 500;">Ato com Reserva de Usufruto</label>
+</div>
+<div class="checkbox-group">
+    <input type="radio" id="natureza_apenas_usufruto" name="ato_natureza" value="apenas_usufruto">
+    <label for="natureza_apenas_usufruto" style="font-weight: 500;">Apenas o Usufruto</label>
+</div>
+</div>
+</div>
+
+                <div class="form-group checkbox-group" id="combo-option-container" style="display: none;">
+                    <input type="checkbox" id="add-combo">
+                    <label for="add-combo">Adicionar ato correspondente (Registro/Escritura) com a mesma base de cálculo</label>
+                </div>
+               
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="incluir-itcmd-variavel">
+                    <label for="incluir-itcmd-variavel">Adicionar ITCMD (Alíquota progressiva)</label>
+                </div>
+<div class="form-group checkbox-group">
+                    <input type="checkbox" id="incluir-itbi">
+                    <label for="incluir-itbi">Adicionar ITBI (2%) para este valor</label>
+                </div>
+<!-- PAINEL DE OPÇÕES AVANÇADAS DO ITCMD (INSERIR AQUI) -->
+<div id="itcmd-options-panel" style="display: none; border: 1px solid #e0e0e0; padding: 1rem; margin-top: 0.75rem; margin-bottom: 1.25rem; border-radius: 6px; background-color: #f8f9fa;">
+<div class="form-group" style="margin-bottom: 0.75rem;">
+<label style="font-weight: 600; font-size: 0.9rem; color: var(--dark-gray);">Como a base de cálculo do ITCMD deve ser considerada?</label>
+</div>
+<div class="form-group" style="margin-bottom: 0.5rem;">
+<div class="checkbox-group">
+    <input type="radio" id="itcmd_base_padrao" name="itcmd_base_type" value="padrao" checked>
+    <label for="itcmd_base_padrao" style="font-weight: 500;">Padrão (sobre o valor total do bem)</label>
+</div>
+</div>
+<div class="form-group" style="margin-bottom: 0;">
+<div class="checkbox-group">
+    <input type="radio" id="itcmd_base_fracionado" name="itcmd_base_type" value="fracionado">
+    <label for="itcmd_base_fracionado" style="font-weight: 500;">Múltiplos Donatários</label>
+</div>
+<div id="itcmd-donors-details" style="display: none; margin-top: 0.75rem; padding-left: 1.75rem;">
+    <label for="itcmd-donors-count" style="font-size: 0.9rem;">Número de Donatários:</label>
+    <input type="number" id="itcmd-donors-count" class="stepper" value="2" min="2" style="width: 100px; padding: 0.5rem;">
+    <p style="font-size: 0.8rem; color: #6c757d; margin-top: 4px;">O valor do bem será dividido igualmente entre os Donatários para o cálculo individual do imposto.</p>
+</div>
+</div>
+</div>
+                <button id="add-variavel" class="btn btn-primary">Adicionar ao Orçamento</button>
+            </div>
+
+            <!-- Tab Fixo -->
+            <div id="tab-fixo" class="tab-content">
+                <div class="form-group">
+                    <label for="ato-fixo">Tipo de Ato</label>
+                    <select id="ato-fixo"></select>
+                </div>
+                <div class="form-group">
+                    <label for="quantidade-fixo">Quantidade</label>
+                    <input type="number" id="quantidade-fixo" class="stepper" value="1" min="1">
+                </div>
+                 <button id="add-fixo" class="btn btn-primary">Adicionar ao Orçamento</button>
+            </div>
+
+            <!-- Tab Inventário -->
+            <div id="tab-inventario" class="tab-content">
+                <p style="font-size: 0.9rem; color: var(--secondary-color); margin-bottom: 1rem;">
+                    Adicione os bens do inventário, partilha ou doação. O sistema calculará a escritura, os registros dos imóveis e o ITCMD devido.
+                </p>
+                <div class="form-group checkbox-group" style="padding: 0.5rem; background-color: #e9ecef; border-radius: 6px; margin-bottom: 1.5rem;">
+                    <input type="checkbox" id="inventory-calculate-itcmd">
+                    <label for="inventory-calculate-itcmd"><strong>Calcular ITCMD para os bens aplicáveis</strong></label>
+                </div>
+<div id="itcmd-disclaimer" style="display: none; padding: 0.8rem; margin-bottom: 1.5rem; border-radius: 6px; background-color: #fffbe6; border: 1px solid #ffe58f; color: #8a6d3b; font-size: 0.85rem; line-height: 1.5;">
+<strong>Atenção:</strong> A calculadora de ITCMD assume uma divisão <strong>igualitária</strong> da herança entre os descendentes diretos. Para partilhas complexas (ex: netos herdando, divisões desiguais), utilize a aba <strong>ITCMD Avulso</strong> para inserir o valor do imposto.
+</div>
+<div id="inventory-itcmd-settings" style="display: none; border: 1px solid #e0e0e0; padding: 1rem; margin-top: 1rem; margin-bottom: 1.5rem; border-radius: 6px; background-color: #f8f9fa;">
+<p style="font-size: 0.9rem; color: var(--secondary-color); margin-bottom: 1rem; text-align: center;">
+    Informe os dados da sucessão para o cálculo da partilha e do ITCMD.
+</p>
+<div class="form-group" style="border-bottom: 1px solid #e0e0e0; padding-bottom: 1rem; margin-bottom: 1rem;">
+    <label style="font-weight: 600;">Classe dos Herdeiros</label>
+    <div style="display: flex; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap;">
+        <label style="display: flex; align-items: center; gap: 0.3rem;"><input type="radio" name="inventory-heir-class" value="descendentes" checked> Descendentes</label>
+        <label style="display: flex; align-items: center; gap: 0.3rem;"><input type="radio" name="inventory-heir-class" value="ascendentes"> Ascendentes</label>
+        <label style="display: flex; align-items: center; gap: 0.3rem;"><input type="radio" name="inventory-heir-class" value="colaterais"> Colaterais</label>
+    </div>
+</div>
+<div class="form-group">
+<label for="inventory-has-spouse">O falecido deixou cônjuge/companheiro(a)?</label>
+<select id="inventory-has-spouse">
+    <option value="nao" selected>Não</option>
+    <option value="sim">Sim</option>
+</select>
+</div>
+<div class="form-group">
+<label for="inventory-heir-count">Quantidade de Herdeiros (nesta classe)</label>
+<input type="number" id="inventory-heir-count" class="stepper" value="1" min="1">
+</div>
+<div id="inventory-spouse-heir-option" class="form-group" style="display: none;">
+ <div class="checkbox-group">
+    <input type="checkbox" id="inventory-spouse-is-heir">
+    <label for="inventory-spouse-is-heir">Cônjuge concorre na herança (além da meação)?</label>
+</div>
+</div>
+
+<div class="form-group" style="margin-top: 1.5rem; border-top: 1px solid #e0e0e0; padding-top: 1rem;">
+    <div class="checkbox-group">
+        <input type="checkbox" id="inventory-manual-division">
+        <label for="inventory-manual-division" style="font-weight: 600; color: #b91c1c;">Divisão Desigual / Frações Personalizadas</label>
+    </div>
+    <div id="inventory-manual-division-panel" style="display: none; margin-top: 1rem; background: #fff; padding: 1rem; border-radius: 6px; border: 1px dashed #fca5a5;">
+        <p style="font-size: 0.8rem; color: #666; margin-top: 0;">Em caso de testamento ou cessão, defina a porcentagem exata do Monte-Mor Líquido que cada parte receberá. A soma deve ser 100%.</p>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <div style="flex: 1;">
+                <label for="inventory-manual-spouse-pct">Cônjuge (%)</label>
+                <input type="number" id="inventory-manual-spouse-pct" value="0" min="0" max="100" step="0.01">
+            </div>
+            <div style="flex: 1;">
+                <label for="inventory-manual-heirs-pct">Herdeiros (Total %)</label>
+                <input type="number" id="inventory-manual-heirs-pct" value="100" min="0" max="100" step="0.01">
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+                <div id="inventory-assets-list" style="margin-bottom: 1rem;">
+                   <!-- Asset rows will be dynamically added here -->
+                </div>
+                <button id="add-inventory-asset" class="btn btn-add-discreet" style="width: 100%; margin-bottom: 1rem;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/></svg>
+    Adicionar outro Bem
+</button>
+
+                <!-- NOVO: Gráfico de Pizza da Partilha -->
+                <div id="inventory-pie-chart-container" style="display: none; padding: 1.5rem; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                    <h5 style="text-align: center; margin-top: 0; color: var(--primary-color);">Visualização da Partilha (Monte Líquido)</h5>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 2.5rem; flex-wrap: wrap; margin-top: 1.5rem;">
+                        <div id="inventory-pie-chart" style="width: 160px; height: 160px; border-radius: 50%; background: #e9ecef; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);"></div>
+                        <div id="inventory-pie-legend" style="flex: 1; min-width: 220px; font-size: 0.95rem; line-height: 1.6;">
+                            <!-- Legendas inseridas via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <button id="calculate-inventory" class="btn btn-primary" style="font-size: 1.1rem; padding: 0.8rem;">Calcular Partilha e ITCMD</button>
+            </div>
+            
+            <!-- Tab Manual -->
+            <div id="tab-manual" class="tab-content">
+                <div class="form-group">
+                    <label for="descricao-manual">Descrição do Serviço</label>
+                    <input type="text" id="descricao-manual" placeholder="Ex: Serviço de consultoria">
+                </div>
+                <div class="form-group">
+                    <label for="valor-manual">Valor do Serviço (R$)</label>
+                    <input type="text" id="valor-manual" placeholder="100,00">
+                </div>
+                 <button id="add-manual" class="btn btn-primary">Adicionar ao Orçamento</button>
+            </div>
+
+<!-- Tab INCRA -->
+<div id="tab-incra" class="tab-content">
+    <div style="background-color: var(--white); padding: 1.5rem; border-radius: var(--border-radius); border: 1px solid var(--border-color); margin-bottom: 1.5rem; box-shadow: var(--box-shadow);">
+        <h4 style="margin-top: 0; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--light-gray); padding-bottom: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+            Dados Principais da Propriedade
+        </h4>
+        <div id="incra-area-wrapper" class="form-group" style="display: block;">
+            <label for="incra-area" style="font-weight: 600; font-size: 1.1rem; color: var(--text-color);">1. Qual o tamanho da área em hectares?</label>
+            <input type="number" id="incra-area" placeholder="Ex: 50.5" style="font-size: 1.1rem; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 6px; margin-top: 0.5rem; width: 100%;">
+            
+            <!-- Ferramenta de Conversão de Alqueires (Premium) -->
+            <div id="alqueires-converter" style="margin-top: 1.2rem; border-radius: 8px; background-color: #f8f9fa; padding: 1.25rem; border: 1px solid #e9ecef;">
+                 <label for="incra-alqueires" style="font-weight: 600; color: #495057; font-size: 0.95rem; margin-bottom: 0.75rem; display: block;">Calculadora de Alqueires Paulistas</label>
+                 <div style="display: flex; gap: 0.75rem; align-items: stretch;">
+                     <input type="number" id="incra-alqueires" placeholder="Valor em alqueires..." style="flex-grow: 1; border: 1px solid #ced4da; border-radius: 6px; padding: 0.6rem; font-size: 1rem;">
+                     <button id="convert-alqueires-btn" class="btn btn-secondary" style="padding: 0.6rem 1.25rem; margin: 0; display: flex; align-items: center; gap: 0.4rem; font-weight: 500; transition: all 0.2s;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.5 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L11 2.707V14.5a.5.5 0 0 0 .5.5zm-7-14a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V1.5a.5.5 0 0 1 .5-.5z"/></svg> Converter para Hectares</button>
+                 </div>
+                 <p style="font-size: 0.8rem; color: #6c757d; margin-top: 8px; margin-bottom: 0; font-style: italic;">A conversão utiliza o padrão de 1 alqueire paulista = 2,42 hectares.</p>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 1.5rem;">
+            <label for="incra-municipio" style="font-weight: 600; font-size: 1.1rem; color: var(--text-color);">2. Em qual Município de Rondônia?</label>
+            <select id="incra-municipio" style="font-size: 1.1rem; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 6px; margin-top: 0.5rem; width: 100%;"></select>
+        </div>
+        
+        <button id="view-ranking-btn" class="btn btn-primary" style="display: none; margin-top: 1.5rem; width: 100%; justify-content: center; align-items: center; gap: 0.5rem; font-size: 1.1rem; padding: 1rem; box-shadow: 0 4px 6px rgba(0,123,255,0.2); transition: all 0.3s ease;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 0l2.5 5.5h5.5l-4.5 4 1.5 5.5-5-3-5 3 1.5-5.5-4.5-4h5.5z"/></svg>
+            Calcular Menu de Preços da Região
+        </button>
+    </div>
+
+    <!-- Container oculto de auto-preenchimento (Apenas para lógica interna do JS) -->
+    <div id="incra-auto-fill-container" style="display: none;">
+        <div id="incra-level-wrapper" class="form-group" style="display: none;">
+            <label for="incra-level">Nível Categórico</label>
+            <select id="incra-level"></select>
+        </div>
+        <div id="incra-typology-wrapper" class="form-group" style="display: none;">
+            <label for="incra-typology">Tipologia de Uso</label>
+            <select id="incra-typology"></select>
+        </div>
+         <div id="incra-value-column-wrapper" class="form-group" style="display: none;">
+            <label for="incra-value-column">Coluna de Valor</label>
+            <select id="incra-value-column"></select>
+        </div>
+    </div>
+    
+    <button id="calculate-incra-btn" class="btn btn-primary" style="display: none;">Calcular Avaliação Extrajudicial</button>
+    <div id="incra-result-container" style="display: none; margin-top: 1.5rem; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0; border-radius: 8px; padding: 2rem; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.15); text-align: center;"></div>
+</div>
+
+<div id="tab-itcmd-avulso" class="tab-content">
+                <p style="font-size: 0.9rem; color: var(--secondary-color); margin-bottom: 1.5rem;">
+                    Calcule o ITCMD de forma avulsa para um único bem. Ideal para doações simples ou para conferir valores de forma rápida.
+                </p>
+                <div class="form-group">
+                    <label for="descricao-itcmd">Identificação do Bem/Direito</label>
+                    <input type="text" id="descricao-itcmd" placeholder="Ex: Doação de 1/4 do Imóvel X, Mat. 123">
+                </div>
+                <div class="form-group">
+                    <label for="valor-itcmd">Valor de Avaliação / Base de Cálculo (R$)</label>
+                    <input type="text" id="valor-itcmd" placeholder="150.000,00">
+                </div>
+                <div class="form-group">
+                    <label>Alíquota do Imposto</label>
+                    <div style="border: 1px solid #e0e0e0; padding: 0.75rem; border-radius: 6px; background-color: #f9f9f9;">
+                        <div class="checkbox-group" style="margin-bottom: 0.75rem;">
+                            <input type="radio" id="itcmd_avulso_auto" name="itcmd_avulso_tipo" value="auto" checked>
+                            <label for="itcmd_avulso_auto" style="font-weight: 500;">Calcular automaticamente (Progressiva)</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="radio" id="itcmd_avulso_manual" name="itcmd_avulso_tipo" value="manual">
+                            <label for="itcmd_avulso_manual" style="font-weight: 500;">Informar manualmente</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="itcmd_avulso_manual_panel" class="form-group" style="display: none;">
+                    <label for="itcmd_avulso_aliquota">Alíquota Manual (%)</label>
+                    <input type="number" id="itcmd_avulso_aliquota" placeholder="Ex: 2">
+                </div>
+                <button id="add-itcmd-avulso" class="btn btn-primary">Adicionar ao Orçamento</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+            <section class="budget-section">
+                <div class="budget-header">
+                    <h2>Meu Orçamento</h2>
+                    <div class="no-print" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+    <button id="import-budget-button" class="btn btn-secondary no-print">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+            <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>
+        </svg>
+        Importar
+    </button>
+    <button id="export-budget-button" class="btn btn-secondary no-print" style="display: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+        </svg>
+        Exportar
+    </button>
+    <button id="clear-budget-button" class="btn btn-danger-outline no-print" style="display: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3V2h11v1z"/></svg>
+        Limpar
+    </button>
+    <button id="print-button" class="btn btn-print no-print" style="display: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
+            <path d="M210.6665,76H196V40a4.0002,4.0002,0,0,0-4-4H64a4.0002,4.0002,0,0,0-4,4V76H45.3335C33.57031,76,24,84.97168,24,96v80a4.0002,4.0002,0,0,0,4,4H60v40a4.0002,4.0002,0,0,0,4,4H192a4.0002,4.0002,0,0,0,4-4V180h32a4.0002,4.0002,0,0,0,4-4V96C232,84.97168,222.42969,76,210.6665,76ZM68,44H188V76H68ZM188,216H68V156H188Zm36-44H196V152a4.0002,4.0002,0,0,0-4-4H64a4.0002,4.0002,0,0,0-4,4v20H32V96c0-6.61719,5.98145-12,13.3335-12h165.333C218.01855,84,224,89.38281,224,96Zm-27.99414-56a8,8,0,1,1-8-8A8.00917,8.00917,0,0,1,196.00586,116Z"/>
+        </svg>
+        Imprimir
+    </button>
+</div>
+<input type="file" id="import-file-input" class="no-print" accept=".tjrocalc,.json" style="display: none;">
+                </div>
+                
+                <div class="form-group no-print" id="budgeter-name-group">
+                    <label for="budgeter-name">Orçamento por:</label>
+                    <input type="text" id="budgeter-name" placeholder="Digite seu nome (aparecerá na impressão)">
+                </div>
+
+                <div id="print-header-info">
+                    <p><strong id="print-budgeter-name-label" style="display: none;">Orçamento por: </strong><span id="print-budgeter-name"></span></p>
+                    <p><strong>Data: </strong><span id="print-date"></span></p>
+                </div>
+
+                <div id="budget-items-container"></div>
+                <div id="budget-summary-container"></div>
+            </section>
+        </main>
+
+        <footer class="no-print">
+            <p>Esta é uma ferramenta de simulação. Valores baseados na Tabela de Custas e Emolumentos Extrajudiciais do TJRO, no Relatório RAMT/RO 2021/2022 do INCRA e na Lei Estadual LEI nº 959/00 e alterações. Custos adicionais podem ser aplicáveis.</p>
+            <p class="author-credit">Desenvolvido por Richer Della Torre</p>
+        </footer>
+    </div>
+    
+    <!-- Print Modal -->
+    <div id="print-modal-container" class="modal-overlay no-print">
+        <div class="modal-box">
+            <h4>Opções de Impressão</h4>
+            <p>Escolha como deseja imprimir o orçamento.</p>
+            <div class="modal-actions">
+                <button id="print-simplified-btn" class="btn btn-secondary">Imprimir Resumido</button>
+                <button id="print-detailed-btn" class="btn btn-primary">Imprimir Detalhado</button>
+                <button id="print-cancel-btn" class="btn btn-cancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- NOVO: Modal para Edição de Item -->
+    <div id="edit-item-modal-container" class="modal-overlay no-print">
+        <div class="modal-box">
+            <h4>Editar Lançamento</h4>
+            <p>Altere as descrições do item. Os valores não serão recalculados.</p>
+            <input type="hidden" id="edit-item-id-hidden">
+            <div class="form-group">
+                <label for="edit-item-name">Descrição Principal</label>
+                <input type="text" id="edit-item-name">
+            </div>
+            <div class="form-group">
+                <label for="edit-item-identifier">Identificação / Rótulo (Opcional)</label>
+                <input type="text" id="edit-item-identifier">
+            </div>
+            <div class="modal-actions">
+                <button id="edit-item-cancel-btn" class="btn btn-cancel">Cancelar</button>
+                <button id="edit-item-save-btn" class="btn btn-success">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- NOVO: Modal para Confirmação de Limpeza -->
+    <div id="clear-modal-container" class="modal-overlay no-print">
+        <div class="modal-box">
+            <h4>Confirmar Ação</h4>
+            <p>Tem certeza que deseja limpar todo o orçamento? Esta ação não pode ser desfeita.</p>
+            <div class="modal-actions">
+                <button id="clear-cancel-btn" class="btn btn-secondary">Cancelar</button>
+                <button id="clear-confirm-btn" class="btn btn-danger" style="font-size: 1rem; padding: 0.75rem 1.5rem;">Sim, limpar tudo</button>
+            </div>
+        </div>
+    </div>
+
+
+<!-- NOVO: Modal de Ranking INCRA -->
+<div id="incra-ranking-modal" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 800px; width: 95%;">
+        <h4 style="margin-bottom: 0.5rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 0l2.5 5.5h5.5l-4.5 4 1.5 5.5-5-3-5 3 1.5-5.5-4.5-4h5.5z"/></svg>
+            Ranking de Menores Valores - <span id="ranking-municipio-nome"></span>
+        </h4>
+        <p style="font-size: 0.85rem; color: var(--secondary-color); margin-bottom: 0.5rem;">Visão geral de <strong>TODAS as opções disponíveis</strong> para a área informada, ranqueadas da mais barata para a mais cara.</p>
+        <div style="font-size: 0.75rem; background: #e2e8f0; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; color: #4a5568;">
+            <strong>Como usar:</strong> Esta tabela lista todas as possibilidades de avaliação (Média ou Mediana, VTN ou VTI) para todas as tipologias de terra. <strong>Basta clicar em qualquer linha</strong> que o cartório autorizar para preencher a calculadora automaticamente com o valor exato.
+        </div>
+        <div class="table-responsive" style="overflow-x: auto; max-height: 400px;">
+            <table id="incra-ranking-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                <thead style="position: sticky; top: 0; z-index: 1;">
+                    <tr style="background-color: var(--light-gray); border-bottom: 2px solid var(--medium-gray);">
+                        <th style="padding: 0.6rem; text-align: center;">Rank</th>
+                        <th style="padding: 0.6rem; text-align: left;">Tipologia de Uso / Nível</th>
+                        <th style="padding: 0.6rem; text-align: left;">Parâmetro</th>
+                        <th style="padding: 0.6rem; text-align: right;">Valor Base/ha</th>
+                        <th style="padding: 0.6rem; text-align: right;">Valor Total</th>
+                    </tr>
+                </thead>
+                <tbody id="incra-ranking-body">
+                </tbody>
+            </table>
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--warning-color); display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.75rem; background-color: #fffaf0; border: 1px dashed var(--warning-color); border-radius: 4px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="flex-shrink:0; margin-top: 2px;"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/></svg>
+            <span><strong>Atenção:</strong> Tipologias de menor valor (como <em>Vegetação Nativa</em> ou <em>Baixo Suporte</em>) podem exigir comprovação documental rigorosa (ex: CAR, laudos) por parte do cartório.</span>
+        </div>
+        <div style="text-align: right; margin-top: 1.5rem;">
+            <button id="close-ranking-modal" class="btn btn-primary">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<!-- NOVO: Modal do Guia do Usuário -->
+<div id="user-guide-modal" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 800px;">
+        <h4>Guia do Usuário - Calculadora de Custas</h4>
+        <div class="guide-content">
+            <p>Bem-vindo! Este guia explica como utilizar todas as funcionalidades da calculadora para criar orçamentos precisos e rápidos.</p>
+
+            <h5>Painel Principal (Abas)</h5>
+            <p>A calculadora é dividida em abas, cada uma para um tipo específico de cálculo:</p>
+            <ul>
+                <li><strong>Valor Variável:</strong> Use para atos cujo valor depende de uma base de cálculo, como escrituras, registros e averbações com valor declarado.</li>
+                <li><strong>Valor Fixo:</strong> Para atos com preço tabelado, como reconhecimento de firma, autenticações e procurações.</li>
+                <li><strong>Inventário:</strong> Ferramenta completa para calcular os custos totais de um inventário, incluindo escritura, registros e ITCMD.</li>
+                <li><strong>Manual:</strong> Permite adicionar qualquer item com valor livre ao orçamento, como honorários, despesas de diligência, etc.</li>
+                <li><strong>INCRA:</strong> Uma ferramenta para consultar o valor de referência de imóveis rurais conforme a Tabela do INCRA, útil para definir a base de cálculo.</li>
+                <li><strong>ITCMD Avulso:</strong> Para calcular apenas o valor do ITCMD sobre um bem, ideal para doações simples ou conferências.</li>
+            </ul>
+
+            <h5>Funções Detalhadas</h5>
+
+            <h5>1. Aba "Valor Variável"</h5>
+            <p>Esta é a função mais utilizada. O fluxo é simples:</p>
+            <ol>
+                <li><strong>Tipo de Ato:</strong> Selecione o ato desejado (ex: Escritura com valor, Registro com valor).</li>
+                <li><strong>Identificação (Opcional):</strong> Dê um nome ao ato para facilitar a identificação no orçamento (ex: "Lote 12", "Apto 101").</li>
+                <li><strong>Valor do Ato/Imóvel:</strong> Insira a base de cálculo. <strong>Lembre-se da regra do Art. 113 (explicada abaixo)!</strong></li>
+            </ol>
+            <p><strong>Opções Adicionais:</strong></p>
+            <ul>
+                <li><strong>É averbação de construção?:</strong> Se marcado, abre uma sub-ferramenta para calcular o valor da obra com base na área (m²) e no CUB/m², preenchendo o campo "Valor do Ato" automaticamente.</li>
+                <li><strong>Natureza do Ato:</strong>
+                    <ul>
+                        <li><code>Ato Padrão</code>: Calcula sobre o valor total.</li>
+                        <li><code>Ato com Reserva de Usufruto</code>: Divide o ato em dois: a venda da "nua-propriedade" (valor total) e a instituição do "usufruto" (1/3 do valor total), adicionando ambos ao orçamento.</li>
+                        <li><code>Apenas o Usufruto</code>: Calcula o ato usando apenas 1/3 do valor informado como base.</li>
+                    </ul>
+                </li>
+                <li><strong>Adicionar ato correspondente:</strong> Se você calcula uma escritura, esta opção adiciona automaticamente o registro correspondente (e vice-versa), economizando tempo.</li>
+                <li><strong>Adicionar ITCMD/ITBI:</strong> Calcula e adiciona os impostos de transmissão ao orçamento. O ITBI é fixo em 2% (em geral), e o ITCMD usa a alíquota progressiva do estado (2%, 3% ou 4%).</li>
+            </ul>
+
+            <h5>2. Aba "Inventário"</h5>
+            <p>Esta aba automatiza o cálculo de inventários e partilhas. O sistema calcula a escritura (com base na soma de todos os bens) e os registros individuais de cada imóvel.</p>
+            <ul>
+                <li><strong>Calcular ITCMD:</strong> Se marcado, o sistema também calculará o imposto devido com base nos dados da sucessão que você informar (cônjuge, número de herdeiros).</li>
+                <li><strong>Lógica do ITCMD no Inventário:</strong> A calculadora assume uma partilha igualitária entre os herdeiros descendentes. A meação do cônjuge (50% dos bens comuns) não gera imposto. A herança (outros 50% e bens particulares) é dividida entre os herdeiros, e o imposto é calculado individualmente sobre a cota de cada um. <strong>Atenção:</strong> Para partilhas complexas, use a aba "ITCMD Avulso".</li>
+            </ul>
+
+            <h5>3. Aba "INCRA"</h5>
+            <p>Use esta ferramenta para obter uma avaliação oficial de um imóvel rural. Siga os passos, preenchendo Município, Nível, Tipologia, Coluna de Referência e Área (em hectares). O valor calculado pode ser usado como base de cálculo na aba "Valor Variável".</p>
+
+            <h5>Gerenciando o Orçamento (Painel da Direita)</h5>
+            <ul>
+                <li><strong>Detalhes (▼):</strong> Mostra a composição do valor do ato (emolumentos, fundos, selo).</li>
+                <li><strong>Editar (Lápis):</strong> Permite alterar a descrição e a identificação de um item já lançado.</li>
+                <li><strong>Remover (Lixeira):</strong> Exclui o item do orçamento.</li>
+                <li><strong>Limpar:</strong> Apaga todos os itens do orçamento (pede confirmação).</li>
+                <li><strong>Imprimir:</strong> Abre opções para gerar uma versão resumida ou detalhada do orçamento para impressão.</li>
+            </ul>
+
+            <h5 id="artigo-113">Entendendo a Base de Cálculo (Art. 113)</h5>
+            <p>A escolha do valor a ser inserido no campo <strong>"Valor do Ato/Imóvel"</strong> é crucial e segue uma regra legal estrita. Conforme o Art. 113 das Diretrizes Gerais Extrajudiciais do TJRO, a base de cálculo para os emolumentos deve ser sempre <strong>o maior valor</strong> dentre as seguintes opções:</p>
+            <ul>
+                <li><strong>I -</strong> O valor do negócio declarado pelas partes (ex: o preço de venda no contrato).</li>
+                <li><strong>II -</strong> O valor venal do imóvel para fins de IPTU (para imóveis urbanos).</li>
+                <li><strong>III -</strong> O valor total da declaração do ITR (terra nua + benfeitorias) (para imóveis rurais).</li>
+                <li><strong>IV -</strong> O valor de avaliação fiscal usado para o recolhimento do imposto de transmissão (ITBI ou ITCMD).</li>
+            </ul>
+            <p><strong>Na prática:</strong> Você deve verificar todos esses valores e inserir o maior deles na calculadora. A responsabilidade por informar a base de cálculo correta é do usuário.</p>
+
+        </div>
+        <div class="modal-actions">
+            <button id="guide-close-btn" class="btn btn-primary">Entendi, fechar</button>
+        </div>
+    </div>
+</div>
+
+    <div id="incra-raw-data" style="display:none;">
+    <!-- === INÍCIO: Mercado Regional de Terras Cone Sul === -->
+    <div class="regional-market" 
+         data-region-name="Zona Cone Sul" 
+         data-municipalities="Vilhena,Colorado D'Oeste,Cabixi,Cerejeiras,Pimenteiras D'Oeste,Corumbiara,Primavera de Rondônia,Pimenta Bueno,Chupinguaia,Parecis">
+        
+        <div class="categorical-level" data-level-name="Geral">
+            <div class="typology" data-typology-name="Geral" data-media-vti="26489.45" data-mediana-vti="25000.00" data-media-vtn="18643.58" data-mediana-vtn="17500.00"></div>
+        </div>
+
+        <div class="categorical-level" data-level-name="1º Nível Categórico">
+            <div class="typology" data-typology-name="Agricultura" data-media-vti="34633.62" data-mediana-vti="33058.00" data-media-vtn="21505.72" data-mediana-vtn="21175.47"></div>
+            <div class="typology" data-typology-name="Pecuária" data-media-vti="15377.96" data-mediana-vti="13602.94" data-media-vtn="11951.67" data-mediana-vtn="10215.18"></div>
+            <div class="typology" data-typology-name="Vegetação Nativa" data-media-vti="3355.79" data-mediana-vti="2691.39" data-media-vtn="2884.60" data-mediana-vtn="2422.25"></div>
+        </div>
+
+        <div class="categorical-level" data-level-name="2º Nível Categórico">
+            <div class="typology" data-typology-name="Agricultura - Agricultura Familiar" data-media-vti="31937.20" data-mediana-vti="30329.34" data-media-vtn="20889.19" data-mediana-vtn="20045.45"></div>
+            <div class="typology" data-typology-name="Agricultura - Lavoura Mecanizada" data-media-vti="38724.19" data-mediana-vti="37215.19" data-media-vtn="28028.42" data-mediana-vtn="27892.35"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Baixo Suporte" data-media-vti="9902.00" data-mediana-vti="10050.95" data-media-vtn="7342.49" data-mediana-vtn="7500.00"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Médio Suporte" data-media-vti="21949.11" data-mediana-vti="20704.08" data-media-vtn="17043.47" data-mediana-vtn="16563.27"></div>
+            <div class="typology" data-typology-name="Vegetação Nativa - Mata Explorada" data-media-vti="3355.79" data-mediana-vti="2691.39" data-media-vtn="2884.60" data-mediana-vtn="2422.25"></div>
+        </div>
+    </div>
+    <!-- === FIM: Mercado Regional de Terras Cone Sul === -->
+
+    <!-- === INÍCIO: Mercado Regional de Terras Zona da Mata === -->
+    <div class="regional-market" 
+         data-region-name="Zona da Mata" 
+         data-municipalities="Rolim de Moura,Novo Horizonte D'Oeste,Nova Brasilândia D'Oeste,Alta Floresta D'Oeste,Castanheiras,Alto Alegre dos Parecis,Santa Luzia D'Oeste,São Felipe D'Oeste">
+        
+        <div class="categorical-level" data-level-name="Geral">
+            <div class="typology" data-typology-name="Geral" data-media-vti="36613.86" data-mediana-vti="35000.00" data-media-vtn="25056.02" data-mediana-vtn="24568.97"></div>
+        </div>
+
+        <div class="categorical-level" data-level-name="1º Nível Categórico">
+            <div class="typology" data-typology-name="Agricultura" data-media-vti="40792.99" data-mediana-vti="39186.90" data-media-vtn="28455.64" data-mediana-vtn="27696.18"></div>
+            <div class="typology" data-typology-name="Exploração Mista" data-media-vti="42826.53" data-mediana-vti="39137.37" data-media-vtn="31357.73" data-mediana-vtn="29448.41"></div>
+            <div class="typology" data-typology-name="Pecuária" data-media-vti="25388.21" data-mediana-vti="23028.57" data-media-vtn="17694.42" data-mediana-vtn="17271.43"></div>
+        </div>
+
+        <div class="categorical-level" data-level-name="2º Nível Categórico">
+            <div class="typology" data-typology-name="Agricultura - Agricultura Familiar" data-media-vti="42182.95" data-mediana-vti="42857.14" data-media-vtn="29006.29" data-mediana-vtn="27892.35"></div>
+            <div class="typology" data-typology-name="Agricultura - Lavoura Mecanizada" data-media-vti="37020.23" data-mediana-vti="33517.24" data-media-vtn="26961.02" data-mediana-vtn="25137.93"></div>
+            <div class="typology" data-typology-name="Exploração Mista - Lavoura Mecanizada e Pecuária" data-media-vti="42826.53" data-mediana-vti="39137.37" data-media-vtn="31357.73" data-mediana-vtn="29448.41"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Alto Suporte" data-media-vti="35525.85" data-mediana-vti="35632.41" data-media-vtn="23524.78" data-mediana-vtn="21889.95"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Baixo Suporte" data-media-vti="11677.51" data-mediana-vti="10692.90" data-media-vtn="9770.22" data-mediana-vtn="9088.97"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Médio Suporte" data-media-vti="20464.79" data-mediana-vti="20489.68" data-media-vtn="14892.02" data-mediana-vtn="14900.38"></div>
+        </div>
+    </div>
+    <!-- === FIM: Mercado Regional de Terras Zona da Mata === -->
+
+    <!-- === INÍCIO: Mercado Regional de Terras BR-429 === -->
+    <div class="regional-market" 
+         data-region-name="BR-429" 
+         data-municipalities="São Miguel do Guaporé,Alvorada D'Oeste,Seringueiras,São Francisco do Guaporé,Costa Marques">
+
+        <div class="categorical-level" data-level-name="Geral">
+            <div class="typology" data-typology-name="Geral" data-media-vti="22168.02" data-mediana-vti="20586.91" data-media-vtn="15693.58" data-mediana-vtn="15384.63"></div>
+        </div>
+
+        <div class="categorical-level" data-level-name="1º Nível Categórico">
+            <div class="typology" data-typology-name="Agricultura" data-media-vti="22668.78" data-mediana-vti="23157.03" data-media-vtn="16092.43" data-mediana-vtn="16666.67"></div>
+            <div class="typology" data-typology-name="Exploração Mista" data-media-vti="42121.66" data-mediana-vti="40843.23" data-media-vtn="27534.20" data-mediana-vtn="28407.12"></div>
+            <div class="typology" data-typology-name="Pecuária" data-media-vti="18731.24" data-mediana-vti="19287.41" data-media-vtn="14168.06" data-mediana-vtn="14086.53"></div>
+            <div class="typology" data-typology-name="Vegetação Nativa" data-media-vti="4639.38" data-mediana-vti="4419.25" data-media-vtn="3237.03" data-mediana-vtn="3172.34"></div>
+        </div>
+        
+        <div class="categorical-level" data-level-name="2º Nível Categórico">
+            <div class="typology" data-typology-name="Agricultura - Agricultura Familiar" data-media-vti="19796.72" data-mediana-vti="20330.50" data-media-vtn="13914.27" data-mediana-vtn="13970.59"></div>
+            <div class="typology" data-typology-name="Agricultura - Lavoura Mecanizada" data-media-vti="31284.96" data-mediana-vti="27901.77" data-media-vtn="22626.92" data-mediana-vtn="20910.27"></div>
+            <div class="typology" data-typology-name="Exploração Mista - Lavoura Mecanizada e Pecuária" data-media-vti="42121.66" data-mediana-vti="40843.23" data-media-vtn="27534.20" data-mediana-vtn="28407.12"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Baixo Suporte" data-media-vti="13062.39" data-mediana-vti="12903.23" data-media-vtn="9975.12" data-mediana-vtn="9677.42"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Médio Suporte" data-media-vti="19525.61" data-mediana-vti="20459.93" data-media-vtn="15311.59" data-mediana-vtn="15383.29"></div>
+            <div class="typology" data-typology-name="Vegetação Nativa - Potencial Madeireiro" data-media-vti="4639.38" data-mediana-vti="4419.25" data-media-vtn="3237.03" data-mediana-vtn="3172.34"></div>
+        </div>
+    </div>
+    <!-- === FIM: Mercado Regional de Terras BR-429 === -->
+    
+    <!-- === INÍCIO: Mercado Regional de Terras Vale do Mamoré === -->
+    <div class="regional-market"
+         data-region-name="Vale do Mamoré"
+         data-municipalities="Guajará-Mirim,Nova Mamoré">
+        
+        <div class="categorical-level" data-level-name="Geral">
+            <div class="typology" data-typology-name="Geral" data-media-vti="22902.91" data-mediana-vti="20454.81" data-media-vtn="16806.42" data-mediana-vtn="15979.00"></div>
+        </div>
+        
+        <div class="categorical-level" data-level-name="1º Nível Categórico">
+            <div class="typology" data-typology-name="Agricultura" data-media-vti="28635.37" data-mediana-vti="29752.20" data-media-vtn="20622.58" data-mediana-vtn="20826.54"></div>
+            <div class="typology" data-typology-name="Exploração Mista" data-media-vti="20570.94" data-mediana-vti="22313.88" data-media-vtn="14858.25" data-mediana-vtn="16735.41"></div>
+            <div class="typology" data-typology-name="Pecuária" data-media-vti="17085.62" data-mediana-vti="18548.62" data-media-vtn="13059.00" data-mediana-vtn="13016.25"></div>
+        </div>
+
+        <div class="categorical-level" data-level-name="2º Nível Categórico">
+            <div class="typology" data-typology-name="Agricultura - Agricultura Familiar" data-media-vti="16460.76" data-mediana-vti="16072.15" data-media-vtn="11683.49" data-mediana-vtn="11203.54"></div>
+            <div class="typology" data-typology-name="Agricultura - Lavoura Mecanizada" data-media-vti="37687.80" data-mediana-vti="39049.30" data-media-vtn="27867.18" data-mediana-vtn="29338.50"></div>
+            <div class="typology" data-typology-name="Exploração Mista - Lavoura Mecanizada e Pecuária" data-media-vti="25314.73" data-mediana-vti="24154.84" data-media-vtn="17722.83" data-mediana-vtn="18058.07"></div>
+            <div class="typology" data-typology-name="Exploração Mista - Pecuária e Manejo Florestal" data-media-vti="13929.63" data-mediana-vti="13846.15" data-media-vtn="9993.52" data-mediana-vtn="10384.62"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Baixo Suporte" data-media-vti="11543.53" data-mediana-vti="10800.00" data-media-vtn="10029.17" data-mediana-vtn="9297.52"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Médio Suporte" data-media-vti="19005.47" data-mediana-vti="18593.61" data-media-vtn="15331.38" data-mediana-vtn="15043.25"></div>
+        </div>
+    </div>
+    <!-- === FIM: Mercado Regional de Terras Vale do Mamoré === -->
+
+    <!-- === INÍCIO: Mercado Regional de Terras Região Central === -->
+    <div class="regional-market" 
+         data-region-name="Região Central" 
+         data-municipalities="Ji-Paraná,Presidente Médici,Cacoal,Espigão D'Oeste,Ministro Andreazza,Ouro Preto D'Oeste,Vale do Paraíso,Teixeirópolis,Urupá,Nova União,Mirante da Serra,Jaru,Theobroma,Governador Jorge Teixeira">
+        
+        <div class="categorical-level" data-level-name="Geral">
+            <div class="typology" data-typology-name="Geral" data-media-vti="33362.14" data-mediana-vti="33333.33" data-media-vtn="22272.46" data-mediana-vtn="22788.46"></div>
+        </div>
+
+        <div class="categorical-level" data-level-name="1º Nível Categórico">
+            <div class="typology" data-typology-name="Agricultura" data-media-vti="36008.55" data-mediana-vti="37264.00" data-media-vtn="24260.26" data-mediana-vtn="25000.00"></div>
+            <div class="typology" data-typology-name="Exploração Mista" data-media-vti="25770.63" data-mediana-vti="26033.23" data-media-vtn="18088.87" data-mediana-vtn="19206.96"></div>
+            <div class="typology" data-typology-name="Pecuária" data-media-vti="27533.97" data-mediana-vti="25963.64" data-media-vtn="18224.25" data-mediana-vtn="18750.00"></div>
+        </div>
+
+        <div class="categorical-level" data-level-name="2º Nível Categórico">
+            <div class="typology" data-typology-name="Agricultura - Agricultura Familiar" data-media-vti="35338.80" data-mediana-vti="36666.67" data-media-vtn="23639.99" data-mediana-vtn="24400.00"></div>
+            <div class="typology" data-typology-name="Agricultura - Lavoura Mecanizada" data-media-vti="41058.24" data-mediana-vti="40833.33" data-media-vtn="30850.62" data-mediana-vtn="30526.32"></div>
+            <div class="typology" data-typology-name="Exploração Mista - Lavoura Mecanizada e Pecuária" data-media-vti="25770.63" data-mediana-vti="26033.23" data-media-vtn="18088.87" data-mediana-vtn="19206.96"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Alto Suporte" data-media-vti="37945.61" data-mediana-vti="36000.00" data-media-vtn="23931.08" data-mediana-vtn="25000.00"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Baixo Suporte" data-media-vti="9821.38" data-mediana-vti="10193.03" data-media-vtn="7776.03" data-mediana-vtn="8180.00"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Médio Suporte" data-media-vti="22957.30" data-mediana-vti="24793.00" data-media-vtn="16210.74" data-mediana-vtn="17010.00"></div>
+        </div>
+    </div>
+    <!-- === FIM: Mercado Regional de Terras Região Central === -->
+
+    <!-- === INÍCIO: Mercado Regional de Terras Vale do Jamari === -->
+    <div class="regional-market" 
+         data-region-name="Vale do Jamari" 
+         data-municipalities="Ariquemes,Cacaulândia,Monte Negro,Campo Novo de Rondônia,Buritis,Alto Paraíso,Vale do Anari,Machadinho D'Oeste,Cujubim,Rio Crespo">
+
+        <div class="categorical-level" data-level-name="Geral">
+            <div class="typology" data-typology-name="Geral" data-media-vti="23164.17" data-mediana-vti="22500.00" data-media-vtn="15598.40" data-mediana-vtn="15733.46"></div>
+        </div>
+
+        <div class="categorical-level" data-level-name="1º Nível Categórico">
+            <div class="typology" data-typology-name="Agricultura" data-media-vti="25613.63" data-mediana-vti="25862.07" data-media-vtn="16675.26" data-mediana-vtn="16369.05"></div>
+            <div class="typology" data-typology-name="Exploração Mista" data-media-vti="26649.49" data-mediana-vti="27446.28" data-media-vtn="18982.39" data-mediana-vtn="20397.98"></div>
+            <div class="typology" data-typology-name="Pecuária" data-media-vti="20697.83" data-mediana-vti="21091.15" data-media-vtn="14461.71" data-mediana-vtn="14423.08"></div>
+            <div class="typology" data-typology-name="Vegetação Nativa" data-media-vti="3516.86" data-mediana-vti="4142.01" data-media-vtn="2639.49" data-mediana-vtn="2858.58"></div>
+        </div>
+
+        <div class="categorical-level" data-level-name="2º Nível Categórico">
+            <div class="typology" data-typology-name="Agricultura - Agricultura Familiar" data-media-vti="21732.76" data-mediana-vti="20959.25" data-media-vtn="13537.10" data-mediana-vtn="13333.33"></div>
+            <div class="typology" data-typology-name="Agricultura - Lavoura Mecanizada" data-media-vti="34927.72" data-mediana-vti="35643.56" data-media-vtn="25273.53" data-mediana-vtn="25496.90"></div>
+            <div class="typology" data-typology-name="Exploração Mista - Lavoura Mecanizada e Pecuária" data-media-vti="31354.45" data-mediana-vti="30667.91" data-media-vtn="20699.28" data-mediana-vtn="20808.00"></div>
+            <div class="typology" data-typology-name="Exploração Mista - Pecuária e Manejo Florestal" data-media-vti="15671.27" data-mediana-vti="17228.27" data-media-vtn="11710.78" data-mediana-vtn="11641.29"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Baixo Suporte" data-media-vti="13615.41" data-mediana-vti="13613.40" data-media-vtn="8870.80" data-mediana-vtn="8455.00"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Médio Suporte" data-media-vti="21392.16" data-mediana-vti="22000.00" data-media-vtn="14841.08" data-mediana-vtn="15384.62"></div>
+            <div class="typology" data-typology-name="Vegetação Nativa - Mata Explorada" data-media-vti="3516.86" data-mediana-vti="4142.01" data-media-vtn="2639.49" data-mediana-vtn="2858.58"></div>
+        </div>
+    </div>
+    <!-- === FIM: Mercado Regional de Terras Vale do Jamari === -->
+
+    <!-- === INÍCIO: Mercado Regional de Terras Rio Madeira === -->
+    <div class="regional-market" 
+         data-region-name="Rio Madeira" 
+         data-municipalities="Porto Velho - Ponta do Abunã,Porto Velho - Alto Madeira,Porto Velho - Baixo Madeira,Candeias do Jamari,Itapuã do Oeste">
+
+        <div class="categorical-level" data-level-name="Geral">
+            <div class="typology" data-typology-name="Geral" data-media-vti="17542.33" data-mediana-vti="15895.68" data-media-vtn="12937.93" data-mediana-vtn="12255.32"></div>
+        </div>
+
+        <div class="categorical-level" data-level-name="1º Nível Categórico">
+            <div class="typology" data-typology-name="Agricultura" data-media-vti="23244.81" data-mediana-vti="21600.00" data-media-vtn="16847.83" data-mediana-vtn="15120.00"></div>
+            <div class="typology" data-typology-name="Exploração Mista" data-media-vti="17786.73" data-mediana-vti="16981.13" data-media-vtn="13569.25" data-mediana-vtn="13466.33"></div>
+            <div class="typology" data-typology-name="Pecuária" data-media-vti="16149.69" data-mediana-vti="14936.17" data-media-vtn="12117.61" data-mediana-vtn="11900.00"></div>
+            <div class="typology" data-typology-name="Vegetação Nativa" data-media-vti="6527.82" data-mediana-vti="5873.09" data-media-vtn="4641.99" data-mediana-vtn="3967.52"></div>
+        </div>
+
+        <div class="categorical-level" data-level-name="2º Nível Categórico">
+            <div class="typology" data-typology-name="Agricultura - Agricultura Familiar" data-media-vti="20227.22" data-mediana-vti="16778.02" data-media-vtn="15192.46" data-mediana-vtn="12727.00"></div>
+            <div class="typology" data-typology-name="Agricultura - Lavoura Mecanizada" data-media-vti="32713.44" data-mediana-vti="31611.57" data-media-vtn="23883.14" data-mediana-vtn="22843.00"></div>
+            <div class="typology" data-typology-name="Exploração Mista - Lavoura Mecanizada e Pecuária" data-media-vti="32717.01" data-mediana-vti="30903.61" data-media-vtn="21810.04" data-mediana-vtn="21259.20"></div>
+            <div class="typology" data-typology-name="Exploração Mista - Pecuária e Manejo Florestal" data-media-vti="15279.36" data-mediana-vti="14924.79" data-media-vtn="11524.62" data-mediana-vtn="12099.09"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Baixo Suporte" data-media-vti="11962.87" data-mediana-vti="12986.84" data-media-vtn="9147.85" data-mediana-vtn="8980.85"></div>
+            <div class="typology" data-typology-name="Pecuária - Pecuária de Médio Suporte" data-media-vti="20452.33" data-mediana-vti="18620.69" data-media-vtn="15130.12" data-mediana-vtn="14823.53"></div>
+            <div class="typology" data-typology-name="Vegetação Nativa - Mata Explorada" data-media-vti="3583.63" data-mediana-vti="3519.11" data-media-vtn="2767.64" data-mediana-vtn="2833.22"></div>
+            <div class="typology" data-typology-name="Vegetação Nativa - Potencial Madeireiro" data-media-vti="8414.64" data-mediana-vti="9115.39" data-media-vtn="6660.52" data-mediana-vtn="6120.00"></div>
+        </div>
+    </div>
+    <!-- === FIM: Mercado Regional de Terras Rio Madeira === -->
+</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializar Steppers
+            document.querySelectorAll('input[type="number"].stepper').forEach(input => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'stepper-wrapper';
+                input.parentNode.insertBefore(wrapper, input);
+                
+                const minusBtn = document.createElement('button');
+                minusBtn.type = 'button';
+                minusBtn.className = 'btn-stepper btn-stepper-minus';
+                minusBtn.innerText = '-';
+                
+                const plusBtn = document.createElement('button');
+                plusBtn.type = 'button';
+                plusBtn.className = 'btn-stepper btn-stepper-plus';
+                plusBtn.innerText = '+';
+                
+                wrapper.appendChild(minusBtn);
+                wrapper.appendChild(input);
+                wrapper.appendChild(plusBtn);
+            });
+
+            document.addEventListener('click', function(e) {
+                // Lógica de Fast Money
+                if (e.target.classList.contains('btn-fast-money')) {
+                    const amount = parseFloat(e.target.dataset.add);
+                    const container = e.target.closest('.form-group');
+                    const input = container.querySelector('input[type="text"]');
+                    if (input) {
+                        let currentVal = input.value.replace(/\D/g, '');
+                        currentVal = currentVal === '' ? 0 : parseFloat(currentVal) / 100;
+                        currentVal += amount;
+                        input.value = currentVal.toFixed(2).replace('.', ',');
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                }
+                
+                // Lógica de Clonar Bem
+                if (e.target.closest('.clone-asset-btn')) {
+                    const rowToClone = e.target.closest('.inventory-asset-row');
+                    const descVal = rowToClone.querySelector('.inv-desc').value;
+                    const valVal = rowToClone.querySelector('.inv-val').value;
+                    const debtVal = rowToClone.querySelector('.inv-debt').value;
+                    const typeVal = rowToClone.querySelector('.inv-type').value;
+                    const isMeacao = rowToClone.querySelector('.inv-meacao').checked;
+                    const isIsento = rowToClone.querySelector('.inv-isento').checked;
+                    
+                    addInventoryAssetRow(); // Cria nova linha
+                    
+                    // Pega a nova linha (a última adicionada)
+                    const newRow = document.getElementById('inventory-assets-list').lastElementChild;
+                    newRow.querySelector('.inv-desc').value = descVal + ' (Cópia)';
+                    newRow.querySelector('.inv-val').value = valVal;
+                    newRow.querySelector('.inv-debt').value = debtVal;
+                    newRow.querySelector('.inv-type').value = typeVal;
+                    newRow.querySelector('.inv-meacao').checked = isMeacao;
+                    newRow.querySelector('.inv-isento').checked = isIsento;
+                }
+                
+                // Stepper
+                if (e.target.classList.contains('btn-stepper')) {
+                    const wrapper = e.target.closest('.stepper-wrapper');
+                    const input = wrapper.querySelector('input[type="number"]');
+                    const isPlus = e.target.classList.contains('btn-stepper-plus');
+                    const step = parseFloat(input.step) || 1;
+                    const min = input.hasAttribute('min') ? parseFloat(input.min) : -Infinity;
+                    const max = input.hasAttribute('max') ? parseFloat(input.max) : Infinity;
+                    let val = parseFloat(input.value) || 0;
+                    
+                    if (isPlus) val += step;
+                    else val -= step;
+                    
+                    if (val >= min && val <= max) {
+                        input.value = val;
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+            });
+
+
+            const feeTables = {
+                notas: {
+                    name: 'Tabelionato de Notas',
+                    atosVariaveis: {
+                        'notas_escritura_valor': {
+                            name: 'Escritura com valor declarado (205b)', selo: 1.57,
+                            ranges: [
+                                { from: 0.01, to: 29684.00, oficial: 314.35 },
+                                { from: 29684.01, to: 39386.00, oficial: 607.81 },
+                                { from: 39386.01, to: 49085.00, oficial: 754.48 },
+                                { from: 49085.01, to: 58787.00, oficial: 901.21 },
+                                { from: 58787.01, to: 68487.00, oficial: 1047.94 },
+                                { from: 68487.01, to: 78189.00, oficial: 1194.61 },
+                                { from: 78189.01, to: 97591.00, oficial: 1488.02 },
+                                { from: 97591.01, to: 116992.00, oficial: 1739.52 },
+                                { from: 116992.01, to: 136393.00, oficial: 1991.02 },
+                                { from: 136393.01, to: 155797.00, oficial: 2221.54 },
+                                { from: 155797.01, to: 175198.00, oficial: 2431.13 },
+                                { from: 175198.01, to: 214000.00, oficial: 2892.22 },
+                                { from: 214000.01, to: 252804.00, oficial: 3332.34 },
+                                { from: 252804.01, to: 291609.00, oficial: 3751.51 },
+                                { from: 291609.01, to: 330410.00, oficial: 4128.74 },
+                                { from: 330410.01, to: 369214.00, oficial: 4485.02 },
+                                { from: 369214.01, to: 466223.00, oficial: 5511.97 },
+                                { from: 466223.01, to: 563231.00, oficial: 6476.03 },
+                                { from: 563231.01, to: 660238.00, oficial: 7377.24 },
+                                { from: 660238.01, to: 757248.00, oficial: 8215.58 },
+                                { from: 757248.01, to: 854256.00, oficial: 8781.44 },
+                                { from: 854256.01, to: 1048273.00, oficial: 10227.57 },
+                                { from: 1048273.01, to: 1242289.00, oficial: 11422.16 },
+                                { from: 1242289.01, to: 1436306.00, oficial: 12428.17 },
+                                { from: 1436306.01, to: 1630323.00, oficial: 13224.56 },
+                                { from: 1630323.01, to: 1824338.00, oficial: 13811.38 },
+                                { from: 1824338.01, to: 2018358.00, oficial: 14209.61 },
+                                { from: 2018358.01, to: 2212372.00, oficial: 14377.25 },
+                                { from: 2212372.01, to: 2406393.00, oficial: 14712.59 },
+                                { from: 2406393.01, to: 2600407.00, oficial: 15173.70 },
+                                { from: 2600407.01, to: 2794424.00, oficial: 15739.56 },
+                                { from: 2794424.01, to: Infinity, oficial: 16305.42 }
+                            ]
+                        }
+                    },
+                    atosFixos: {
+                        'notas_recon_semelhanca_sem_valor': { name: 'Reconhecimento de firma por semelhança s/ valor (201a)', oficial: 3.80, selo: 1.57 },
+                        'notas_recon_semelhanca_com_valor': { name: 'Reconhecimento de firma por semelhança c/ valor (201b)', oficial: 9.51, selo: 1.57 },
+                        'notas_recon_verdadeiro': { name: 'Reconhecimento de firma por verdadeiro (201c)', oficial: 13.31, selo: 1.57 },
+                        'notas_autenticacao': { name: 'Autenticação (por folha) (202)', oficial: 3.81, selo: 1.57 },
+                        'notas_publica_forma_1': { name: 'Pública forma (1ª folha) (203a)', oficial: 1.42, selo: 1.57 },
+                        'notas_publica_forma_sub': { name: 'Pública forma (folha subsequente) (203b)', oficial: 5.20, selo: 0 },
+                        'notas_proc_prev': { name: 'Procuração para fins previdenciários (204a)', oficial: 19.08, selo: 1.57 },
+                        'notas_proc_geral': { name: 'Procuração para foro em geral (204b)', oficial: 28.57, selo: 1.57 },
+                        'notas_proc_sem_valor': { name: 'Procuração sem valor econômico (204c)', oficial: 38.08, selo: 1.57 },
+                        'notas_escritura_sem_valor': { name: 'Escritura sem valor declarado (205a)', oficial: 285.70, selo: 1.57 },
+                        'notas_certidao': { name: 'Certidão (por 5 folhas) (206a)', oficial: 22.32, selo: 1.57 },
+                        'notas_desarq_ate_5': { name: 'Desarquivamento (até 5 anos) (207a)', oficial: 9.51, selo: 1.57 },
+                        'notas_desarq_mais_5': { name: 'Desarquivamento (mais de 5 anos) (207b)', oficial: 19.08, selo: 1.57 },
+                    }
+                },
+                imoveis: {
+                    name: 'Registro de Imóveis',
+                    atosVariaveis: {
+                        'imoveis_registro_valor': {
+                            name: 'Registro com valor declarado (302a)', selo: 1.57,
+                            ranges: [
+                                { from: 0.01, to: 29684.00, oficial: 180.39 },
+                                { from: 29684.01, to: 39386.00, oficial: 336.97 },
+                                { from: 39386.01, to: 49085.00, oficial: 425.97 },
+                                { from: 49085.01, to: 58787.00, oficial: 510.13 },
+                                { from: 58787.01, to: 68487.00, oficial: 594.33 },
+                                { from: 68487.01, to: 78189.00, oficial: 678.51 },
+                                { from: 78189.01, to: 97591.00, oficial: 846.86 },
+                                { from: 97591.01, to: 116992.00, oficial: 992.87 },
+                                { from: 116992.01, to: 136393.00, oficial: 1131.50 },
+                                { from: 136393.01, to: 155797.00, oficial: 1262.77 },
+                                { from: 155797.01, to: 175198.00, oficial: 1386.66 },
+                                { from: 175198.01, to: 214000.00, oficial: 1653.10 },
+                                { from: 214000.01, to: 252804.00, oficial: 1904.83 },
+                                { from: 252804.01, to: 291609.00, oficial: 2141.87 },
+                                { from: 291609.01, to: 330410.00, oficial: 2364.29 },
+                                { from: 330410.01, to: 369214.00, oficial: 2572.08 },
+                                { from: 369214.01, to: 466223.00, oficial: 3159.75 },
+                                { from: 466223.01, to: 563231.00, oficial: 3710.85 },
+                                { from: 563231.01, to: 660238.00, oficial: 4225.49 },
+                                { from: 660238.01, to: 757248.00, oficial: 4703.72 },
+                                { from: 757248.01, to: 854256.00, oficial: 5038.51 },
+                                { from: 854256.01, to: 1048273.00, oficial: 5857.31 },
+                                { from: 1048273.01, to: 1242289.00, oficial: 6553.41 },
+                                { from: 1242289.01, to: 1436306.00, oficial: 7129.20 },
+                                { from: 1436306.01, to: 1630323.00, oficial: 7585.09 },
+                                { from: 1630323.01, to: 1824338.00, oficial: 7924.57 },
+                                { from: 1824338.01, to: 2018358.00, oficial: 8144.97 },
+                                { from: 2018358.01, to: 2212372.00, oficial: 8246.58 },
+                                { from: 2212372.01, to: 2406393.00, oficial: 8433.79 },
+                                { from: 2406393.01, to: 2600407.00, oficial: 8699.21 },
+                                { from: 2600407.01, to: 2794424.00, oficial: 9029.19 },
+                                { from: 2794424.01, to: Infinity, oficial: 9359.14 }
+                            ]
+                        },
+                        'imoveis_averbacao_valor': {
+                            name: 'Averbação com valor declarado (303b)', selo: 1.57,
+                            ranges: [
+                                { from: 0.01, to: 29684.00, oficial: 54.13 },
+                                { from: 29684.01, to: 39386.00, oficial: 101.10 },
+                                { from: 39386.01, to: 49085.00, oficial: 127.79 },
+                                { from: 49085.01, to: 58787.00, oficial: 153.04 },
+                                { from: 58787.01, to: 68487.00, oficial: 178.30 },
+                                { from: 68487.01, to: 78189.00, oficial: 203.55 },
+                                { from: 78189.01, to: 97591.00, oficial: 254.06 },
+                                { from: 97591.01, to: 116992.00, oficial: 297.86 },
+                                { from: 116992.01, to: 136393.00, oficial: 339.46 },
+                                { from: 136393.01, to: 155797.00, oficial: 378.83 },
+                                { from: 155797.01, to: 175198.00, oficial: 416.00 },
+                                { from: 175198.01, to: 214000.00, oficial: 495.92 },
+                                { from: 214000.01, to: 252804.00, oficial: 571.43 },
+                                { from: 252804.01, to: 291609.00, oficial: 642.54 },
+                                { from: 291609.01, to: 330410.00, oficial: 709.30 },
+                                { from: 330410.01, to: 369214.00, oficial: 771.64 },
+                                { from: 369214.01, to: 466223.00, oficial: 947.94 },
+                                { from: 466223.01, to: 563231.00, oficial: 1113.26 },
+                                { from: 563231.01, to: 660238.00, oficial: 1267.64 },
+                                { from: 660238.01, to: 757248.00, oficial: 1411.13 },
+                                { from: 757248.01, to: 854256.00, oficial: 1511.59 },
+                                { from: 854256.01, to: 1048273.00, oficial: 1757.17 },
+                                { from: 1048273.01, to: 1242289.00, oficial: 1966.02 },
+                                { from: 1242289.01, to: 1436306.00, oficial: 2138.76 },
+                                { from: 1436306.01, to: 1630323.00, oficial: 2275.52 },
+                                { from: 1630323.01, to: 1824338.00, oficial: 2377.37 },
+                                { from: 1824338.01, to: 2018358.00, oficial: 2443.48 },
+                                { from: 2018358.01, to: 2212372.00, oficial: 2473.98 },
+                                { from: 2212372.01, to: 2406393.00, oficial: 2530.15 },
+                                { from: 2406393.01, to: 2600407.00, oficial: 2609.77 },
+                                { from: 2600407.01, to: 2794424.00, oficial: 2708.75 },
+                                { from: 2794424.01, to: Infinity, oficial: 2807.77 }
+                            ]
+                        }
+                    },
+                    atosFixos: {
+                        'imoveis_prenotacao': { name: 'Prenotação, Exame e Cálculo (301)', oficial: 59.54, selo: 1.57 },
+                        'imoveis_abertura_matricula': { name: 'Abertura de Matrícula (ato autônomo) (302d)', oficial: 180.43, selo: 1.57 },
+                        'imoveis_averbacao_sem_valor': { name: 'Averbação sem valor declarado (303a)', oficial: 54.13, selo: 1.57 },
+                        'imoveis_certidao_negativa': { name: 'Certidão Negativa ou Breve Relatório (até 5 folhas) (304a1)', oficial: 22.43, selo: 1.57 },
+                        'imoveis_certidao_inteiro_teor': { name: 'Certidão de Inteiro Teor com Negativa de Ônus (304d)', oficial: 29.42, selo: 1.57 },
+                    }
+                }
+            };
+            
+            const incraValueColumns = {
+                vti_mediana: "Mediana VTI/ha", vti_media: "Média VTI/ha",
+                vtn_mediana: "Mediana VTN/ha", vtn_media: "Média VTN/ha"
+            };
+
+            const UPF_2025 = 124.46;
+            const ITCMD_BRACKET_1 = 1250 * UPF_2025;
+            const ITCMD_BRACKET_2 = 6170 * UPF_2025;
+            
+            let budgetItems = [];
+            let inventoryAssetCounter = 0;
+
+            // UI Elements
+            const tabs = document.querySelectorAll('.tab-link');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const budgetItemsContainer = document.getElementById('budget-items-container');
+            const budgetSummaryContainer = document.getElementById('budget-summary-container');
+            const printButton = document.getElementById('print-button');
+            const atoVariavelSelect = document.getElementById('ato-variavel');
+            const atoFixoSelect = document.getElementById('ato-fixo');
+            const comboOptionContainer = document.getElementById('combo-option-container');
+            const usufructOptionContainer = document.getElementById('usufruct-option-container');
+            const printModalContainer = document.getElementById('print-modal-container');
+            const incraMunicipioSelect = document.getElementById('incra-municipio');
+            const incraLevelSelect = document.getElementById('incra-level');
+            const incraTypologySelect = document.getElementById('incra-typology');
+            const incraValueColumnSelect = document.getElementById('incra-value-column');
+            const incraAreaInput = document.getElementById('incra-area');
+            const calculateIncraBtn = document.getElementById('calculate-incra-btn');
+            const incraResultContainer = document.getElementById('incra-result-container');
+            const valorAtoInput = document.getElementById('valor-ato');
+            const budgeterNameInput = document.getElementById('budgeter-name');
+            const printBudgeterNameLabel = document.getElementById('print-budgeter-name-label');
+            const printBudgeterNameSpan = document.getElementById('print-budgeter-name');
+            const printDateSpan = document.getElementById('print-date');
+
+            // Sub-tool elements
+            const constructionSubtoolContainer = document.getElementById('construction-subtool-container');
+            const isConstructionCheckbox = document.getElementById('is-construction-checkbox');
+            const constructionFields = document.getElementById('construction-fields');
+            const calculateConstructionValueBtn = document.getElementById('calculate-construction-value');
+            
+            // --- NOVO: Referências aos novos elementos de UI ---
+            const clearBudgetButton = document.getElementById('clear-budget-button');
+            const editItemModal = document.getElementById('edit-item-modal-container');
+            const clearModal = document.getElementById('clear-modal-container');
+            const editItemIdHiddenInput = document.getElementById('edit-item-id-hidden');
+            const editItemNameInput = document.getElementById('edit-item-name');
+            const editItemIdentifierInput = document.getElementById('edit-item-identifier');
+	    const importBudgetButton = document.getElementById('import-budget-button');
+            const exportBudgetButton = document.getElementById('export-budget-button');
+            const importFileInput = document.getElementById('import-file-input');
+
+            // --- DATA BUILDERS ---
+            function buildIncraData() {
+                const db = {};
+                const dataContainer = document.getElementById('incra-raw-data');
+                if (!dataContainer) {
+                    console.error("INCRA data container not found!");
+                    return {};
+                }
+                const keyMap = {
+                    medianaVti: 'vti_mediana', mediaVti: 'vti_media',
+                    medianaVtn: 'vtn_mediana', mediaVtn: 'vtn_media'
+                };
+                const regioes = dataContainer.querySelectorAll('.regional-market');
+                regioes.forEach(regiaoEl => {
+                    const regionName = regiaoEl.dataset.regionName;
+                    db[regionName] = {};
+                    const niveis = regiaoEl.querySelectorAll('.categorical-level');
+                    niveis.forEach(nivelEl => {
+                        const levelName = nivelEl.dataset.levelName;
+                        db[regionName][levelName] = {};
+                        const tipologias = nivelEl.querySelectorAll('.typology');
+                        tipologias.forEach(tipoEl => {
+                            const typologyName = tipoEl.dataset.typologyName;
+                            const data = {};
+                            for (const key in tipoEl.dataset) {
+                                if (keyMap[key]) {
+                                    data[keyMap[key]] = parseFloat(tipoEl.dataset[key]) || 0;
+                                }
+                            }
+                            db[regionName][levelName][typologyName] = data;
+                        });
+                    });
+                });
+                return db;
+            }
+
+            function buildMunicipalityMap() {
+                const map = {};
+                const dataContainer = document.getElementById('incra-raw-data');
+                if (!dataContainer) {
+                    console.error("INCRA data container not found!");
+                    return {};
+                }
+                const regioes = dataContainer.querySelectorAll('.regional-market');
+                regioes.forEach(regiaoEl => {
+                    const regionName = regiaoEl.dataset.regionName;
+                    const municipalities = regiaoEl.dataset.municipalities.split(',');
+                    municipalities.forEach(mun => {
+                        map[mun] = regionName;
+                    });
+                });
+                return map;
+            }
+            
+            const incraData = buildIncraData();
+            const municipalityToRegionMap = buildMunicipalityMap();
+
+            // --- UTILITY FUNCTIONS ---
+            const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+            const parseCurrency = (value) => {
+                if (typeof value !== 'string' || value.trim() === '') return 0;
+                const number = parseFloat(value.replace(/[R$\.\s]/g, '').replace(',', '.').trim());
+                return isNaN(number) ? 0 : number;
+            };
+            const round = (value, decimals = 2) => Number(Math.round(parseFloat(value + 'e' + decimals)) + 'e-' + decimals);
+
+            // --- CORE LOGIC ---
+            const calculateCosts = (oficial, selo = 0) => {
+                const fuju = round(oficial * 0.20);
+                const fundimper = round(oficial * 0.075);
+                const fundep = round(oficial * 0.04);
+                const fumorpge = round(oficial * 0.03);
+                const subtotal = oficial + fuju + fundimper + fundep + fumorpge + selo;
+                return { oficial, fuju, fundimper, fundep, fumorpge, selo, subtotal };
+            };
+
+            const calculateSingleITCMD = (baseValue) => {
+                let rate = 0;
+                if (baseValue <= 0) {
+                    return { value: 0, rate: 0 };
+                }
+                if (baseValue <= ITCMD_BRACKET_1) {
+                    rate = 0.02;
+                } else if (baseValue <= ITCMD_BRACKET_2) {
+                    rate = 0.03;
+                } else {
+                    rate = 0.04;
+                }
+                const itcmdValue = round(baseValue * rate);
+                return { value: itcmdValue, rate };
+            };
+
+            const findVariableFee = (table, value) => {
+                const range = table.ranges.find(r => value >= r.from && value <= r.to);
+                return range ? { oficial: range.oficial, selo: table.selo } : { oficial: 0, selo: 0 };
+            };
+
+            const renderBudget = () => {
+                if (budgetItems.length === 0) {
+                    // Agora, simplesmente inserimos o componente web que você encontrou
+                    budgetItemsContainer.innerHTML = `
+                        <div id="budget-placeholder">
+                            <dotlottie-wc
+                                src="https://lottie.host/90dfa774-54a9-4d38-ad2d-ce81b44f893f/xjpr2ewavr.lottie"
+                                style="width: 250px; height: 250px; margin: 0 auto;"
+                                speed="1"
+                                autoplay
+                                loop
+                            ></dotlottie-wc>
+                            <p style="font-size: 1.1rem; font-weight: 500; margin-top: 1rem;">Seu orçamento está vazio...</p>
+                            <p style="color: var(--secondary-color);">Adicione um ato no painel à esquerda para começar.</p>
+                        </div>
+                    `;
+
+                    budgetSummaryContainer.innerHTML = '';
+                    printButton.style.display = 'none';
+                    clearBudgetButton.style.display = 'none';
+                    exportBudgetButton.style.display = 'none';
+                    return;
+                }
+
+                // O resto da função permanece igual
+                printButton.style.display = 'inline-flex';
+                clearBudgetButton.style.display = 'inline-flex';
+                exportBudgetButton.style.display = 'inline-flex';
+
+                let itemsHtml = `
+                    <table id="budget-items-table">
+                        <tbody>
+                `;
+                budgetItems.forEach(item => {
+                    let tagsHtml = '<div class="item-tags-container">';
+                    
+                    const lowerName = item.name.toLowerCase();
+                    if (lowerName.includes('escritura') || lowerName.includes('procura')) {
+                        tagsHtml += `<span class="item-tag tag-type-escritura">Tabelionato</span>`;
+                    } else if (lowerName.includes('registro') || lowerName.includes('averba')) {
+                        tagsHtml += `<span class="item-tag tag-type-registro">Registro de Imóveis</span>`;
+                    } else if (lowerName.includes('itcmd') || lowerName.includes('itbi') || lowerName.includes('imposto')) {
+                        tagsHtml += `<span class="item-tag tag-type-itcmd">Imposto</span>`;
+                    }
+                    
+                    if (item.identifier) {
+                        tagsHtml += `<span class="item-tag tag-identifier">${item.identifier}</span>`;
+                    }
+                    if (item.isUsufruct) {
+                        tagsHtml += `<span class="item-tag tag-usufruct">Usufruto (Base: 1/3)</span>`;
+                    }
+                    if (item.isMeacao) {
+                        tagsHtml += `<span class="item-tag tag-meacao">Meação (Base: 50%)</span>`;
+                    }
+                    if (item.evaluationValue && item.evaluationValue !== item.baseValue) {
+                        tagsHtml += `<span class="item-tag tag-evaluation">Avaliação: ${formatCurrency(item.evaluationValue)}</span>`;
+                        tagsHtml += `<span class="item-tag tag-base-value">Base de Cálculo: ${formatCurrency(item.baseValue)}</span>`;
+                    } else if (item.baseValue) {
+                         tagsHtml += `<span class="item-tag tag-base-value">Base: ${formatCurrency(item.baseValue)}</span>`;
+                    }
+                    if (lowerName.includes('itcmd') && item.baseValue && !lowerName.includes('avulso manual')) {
+                        const limit2 = ITCMD_BRACKET_1;
+                        const limit3 = ITCMD_BRACKET_2;
+                        
+                        let progress = 0;
+                        let nextLimit = 0;
+                        let nextRate = '';
+                        let currentRate = '';
+                        
+                        if (item.baseValue <= limit2) {
+                            progress = (item.baseValue / limit2) * 100;
+                            nextLimit = limit2;
+                            currentRate = '2%';
+                            nextRate = '3%';
+                        } else if (item.baseValue <= limit3) {
+                            progress = ((item.baseValue - limit2) / (limit3 - limit2)) * 100;
+                            nextLimit = limit3;
+                            currentRate = '3%';
+                            nextRate = '4%';
+                        } else {
+                            progress = 100;
+                            currentRate = '4%';
+                            nextRate = 'Teto';
+                        }
+                        
+                        if (progress < 100 && item.baseValue > 0) {
+                            const diff = nextLimit - item.baseValue;
+                            tagsHtml += `
+                                <div style="margin-top: 8px; width: 100%; max-width: 250px;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: #718096; margin-bottom: 2px;">
+                                        <span>Faixa Atual: ${currentRate}</span>
+                                        <span>Faltam ${formatCurrency(diff)} para ${nextRate}</span>
+                                    </div>
+                                    <div style="width: 100%; background-color: #e2e8f0; height: 4px; border-radius: 2px; overflow: hidden;" title="Progresso na faixa de ${currentRate}">
+                                        <div style="width: ${progress}%; background-color: #48bb78; height: 100%; transition: width 0.5s ease-in-out;"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                    tagsHtml += '</div>';
+
+                    itemsHtml += `
+                        <tr class="item-row" data-id="${item.id}">
+                            <td class="item-description">
+                                <span class="item-name">${item.name}</span>
+                                ${tagsHtml}
+                            </td>
+                            <td class="item-value">${formatCurrency(item.costs.subtotal)}</td>
+                            <td class="actions-col-wrapper no-print">
+                                ${item.type !== 'itbi' && item.type !== 'manual' && item.type !== 'itcmd' ? `
+                                <button class="btn-icon details-toggle-btn" title="Ver detalhes">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg>
+                                </button>
+                                ` : ''}
+                                <button class="btn-icon edit-btn" title="Editar item">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/></svg>
+                                </button>
+                                <button class="btn-icon remove-btn" title="Remover item">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr class="details-row" data-details-for="${item.id}">
+                           <td colspan="3">
+                                <div class="details-content">
+                                    <table>
+                                        <tbody>
+                                            <tr><td>Emolumentos (Oficial)</td><td class="item-value">${formatCurrency(item.costs.oficial)}</td></tr>
+                                            <tr><td>FUJU (20%)</td><td class="item-value">${formatCurrency(item.costs.fuju)}</td></tr>
+                                            <tr><td>FUNDIMPER (7.5%)</td><td class="item-value">${formatCurrency(item.costs.fundimper)}</td></tr>
+                                            <tr><td>FUNDEP (4%)</td><td class="item-value">${formatCurrency(item.costs.fundep)}</td></tr>
+                                            <tr><td>FUMORPGE (3%)</td><td class="item-value">${formatCurrency(item.costs.fumorpge)}</td></tr>
+                                            <tr><td>Selo de Fiscalização</td><td class="item-value">${formatCurrency(item.costs.selo)}</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                itemsHtml += '</tbody></table>';
+                budgetItemsContainer.innerHTML = itemsHtml;
+
+                const grandTotal = budgetItems.reduce((acc, item) => acc + item.costs.subtotal, 0);
+                budgetSummaryContainer.innerHTML = `
+                    <table id="summary-table">
+                         <tbody>
+                            <tr class="summary-total"><td>TOTAL GERAL DO ORÇAMENTO</td><td class="item-value">${formatCurrency(grandTotal)}</td></tr>
+                        </tbody>
+                    </table>
+                `;
+            };
+
+            const addMultipleItemsToBudget = (items) => {
+                budgetItems.push(...items);
+                renderBudget();
+            };
+
+            const removeItemFromBudget = (id) => {
+                budgetItems = budgetItems.filter(item => item.id !== id);
+                renderBudget();
+            };
+            
+            const switchTab = (tabId) => {
+                const tabToActivate = document.querySelector(`.tab-link[data-tab="${tabId}"]`);
+                if (tabToActivate) {
+                    tabToActivate.click();
+                }
+            };
+
+            // --- INITIALIZATION AND EVENT LISTENERS ---
+
+const exportBudget = () => {
+                if (budgetItems.length === 0) {
+                    alert("O orçamento está vazio. Adicione itens para exportar.");
+                    return;
+                }
+
+                const budgetData = {
+                    budgeterName: budgeterNameInput.value.trim(),
+                    items: budgetItems,
+                    createdAt: new Date().toISOString()
+                };
+
+                const jsonString = JSON.stringify(budgetData, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                const date = new Date().toISOString().slice(0, 10);
+                const name = budgeterNameInput.value.trim().replace(/\s+/g, '_') || 'orcamento';
+                a.href = url;
+                a.download = `orcamento-tjro-${name}_${date}.tjrocalc`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+
+            const handleFileImport = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        
+                        if (!importedData || !Array.isArray(importedData.items)) {
+                            throw new Error("Formato de arquivo inválido ou corrompido.");
+                        }
+
+                        if (budgetItems.length > 0) {
+                           const confirmed = confirm("Atenção: Importar este arquivo substituirá o orçamento atual. Deseja continuar?");
+                           if (!confirmed) return;
+                        }
+
+                        budgetItems = importedData.items;
+                        budgeterNameInput.value = importedData.budgeterName || '';
+                        budgeterNameInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+                        renderBudget();
+                        alert("Orçamento importado com sucesso!");
+
+                    } catch (error) {
+                        console.error("Erro ao importar o arquivo:", error);
+                        alert(`Não foi possível importar o arquivo. Erro: ${error.message}`);
+                    } finally {
+                        importFileInput.value = '';
+                    }
+                };
+                
+                reader.onerror = () => {
+                     alert('Ocorreu um erro ao ler o arquivo selecionado.');
+                     importFileInput.value = '';
+                };
+
+                reader.readAsText(file);
+            };
+
+            const populateSelects = () => {
+                atoVariavelSelect.innerHTML = '<option value="">-- Selecione o ato --</option>';
+                atoFixoSelect.innerHTML = '<option value="">-- Selecione o ato --</option>';
+
+                for (const serventiaKey in feeTables) {
+                    const varOptgroup = document.createElement('optgroup');
+                    varOptgroup.label = feeTables[serventiaKey].name;
+                    for (const atoKey in feeTables[serventiaKey].atosVariaveis) {
+                        const option = document.createElement('option');
+                        option.value = atoKey;
+                        option.textContent = feeTables[serventiaKey].atosVariaveis[atoKey].name;
+                        varOptgroup.appendChild(option);
+                    }
+                    atoVariavelSelect.appendChild(varOptgroup);
+                    
+                    const fixOptgroup = document.createElement('optgroup');
+                    fixOptgroup.label = feeTables[serventiaKey].name;
+                    for (const atoKey in feeTables[serventiaKey].atosFixos) {
+                        const option = document.createElement('option');
+                        option.value = atoKey;
+                        option.textContent = feeTables[serventiaKey].atosFixos[atoKey].name;
+                        fixOptgroup.appendChild(option);
+                    }
+                    atoFixoSelect.appendChild(fixOptgroup);
+                }
+            };
+
+            const populateIncraSelects = () => {
+                const municipios = Object.keys(municipalityToRegionMap).sort((a, b) => a.localeCompare(b));
+                incraMunicipioSelect.innerHTML = '<option value="">-- Selecione o município --</option>';
+                municipios.forEach(mun => {
+                    const option = document.createElement('option');
+                    option.value = mun;
+                    option.textContent = mun;
+                    incraMunicipioSelect.appendChild(option);
+                });
+
+                incraValueColumnSelect.innerHTML = '<option value="">-- Selecione a coluna --</option>';
+                for (const key in incraValueColumns) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = incraValueColumns[key];
+                    incraValueColumnSelect.appendChild(option);
+                }
+            };
+
+            const setupEventListeners = () => {
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const targetTabId = tab.dataset.tab;
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tabContents.forEach(c => c.classList.remove('active'));
+                        tab.classList.add('active');
+                        document.getElementById(targetTabId).classList.add('active');
+                    });
+                });
+
+                document.getElementById('add-variavel').addEventListener('click', () => {
+                     const selectedKey = atoVariavelSelect.value;
+                    if (!selectedKey) return;
+
+                    const valorAtoOriginal = parseCurrency(valorAtoInput.value);
+                    if (valorAtoOriginal <= 0) {
+                        alert('Por favor, insira um valor válido para o ato.');
+                        return;
+                    }
+
+                    const serventiaKey = selectedKey.split('_')[0];
+                    const atoInfo = feeTables[serventiaKey].atosVariaveis[selectedKey];
+                    const descricaoInput = document.getElementById('descricao-variavel');
+                    const identifier = descricaoInput.value.trim();
+                    const addCombo = document.getElementById('add-combo').checked;
+                    const naturezaAto = document.querySelector('input[name="ato_natureza"]:checked').value;
+                    
+                    const newItems = [];
+                    let timestamp = Date.now();
+
+                    const createActPair = (name, baseValue, isUsufructFlag = false, isPrincipal = true) => {
+    const { oficial, selo } = findVariableFee(atoInfo, baseValue);
+    if (oficial > 0) {
+        newItems.push({
+            id: timestamp++, type: 'variavel', name: name,
+            identifier, baseValue, costs: calculateCosts(oficial, selo), isUsufruct: isUsufructFlag
+        });
+    }
+
+    if (addCombo && comboOptionContainer.style.display !== 'none') {
+        const correspondingKey = selectedKey === 'notas_escritura_valor' ? 'imoveis_registro_valor' : 'notas_escritura_valor';
+        const correspondingServentiaKey = correspondingKey.split('_')[0];
+        const correspondingAtoInfo = feeTables[correspondingServentiaKey].atosVariaveis[correspondingKey];
+        const { oficial: corrOficial, selo: corrSelo } = findVariableFee(correspondingAtoInfo, baseValue);
+        if (corrOficial > 0) {
+            // Lógica corrigida para nomear o ato correspondente
+            let correspondingName = correspondingAtoInfo.name;
+            if (naturezaAto === 'composto') {
+                correspondingName += isPrincipal ? ' (Nu-Propriedade)' : ' (Usufruto)';
+            } else if (naturezaAto === 'apenas_usufruto') {
+                correspondingName += ' (Usufruto)';
+            }
+            // Se for 'padrao', nenhum rótulo é adicionado.
+
+            newItems.push({
+                id: timestamp++, type: 'variavel', name: correspondingName,
+                identifier, baseValue, costs: calculateCosts(corrOficial, corrSelo), isUsufruct: isUsufructFlag
+            });
+        }
+    }
+};
+
+                    switch (naturezaAto) {
+                        case 'composto':
+                            createActPair(atoInfo.name + ' (Nu-Propriedade)', valorAtoOriginal, false, true);
+                            createActPair('Instituição de Usufruto', valorAtoOriginal / 3, true, false);
+                            break;
+
+                        case 'apenas_usufruto':
+                            createActPair('Instituição de Usufruto', valorAtoOriginal / 3, true, false);
+                            break;
+
+                        case 'padrao':
+                        default:
+                            createActPair(atoInfo.name, valorAtoOriginal, false, true);
+                            break;
+                    }
+
+                    if (document.getElementById('incluir-itbi').checked) {
+                        const itbiValue = round(valorAtoOriginal * 0.02);
+                        newItems.push({
+                            id: timestamp++, type: 'itbi', name: 'ITBI (Imposto de Transmissão de Bens Imóveis)',
+                            identifier: `Base: ${formatCurrency(valorAtoOriginal)}`, baseValue: valorAtoOriginal,
+                            costs: { subtotal: itbiValue, oficial: 0, fuju: 0, fundimper: 0, fundep: 0, fumorpge: 0, selo: 0 }
+                        });
+                    }
+
+                    if (document.getElementById('incluir-itcmd-variavel').checked) {
+                        const calcType = document.querySelector('input[name="itcmd_base_type"]:checked').value;
+                        let itcmdItem = null;
+                        if (calcType === 'fracionado') {
+                            const donorCount = parseInt(document.getElementById('itcmd-donors-count').value) || 2;
+                            const fractionalValue = valorAtoOriginal / donorCount;
+                            const { value: itcmdPerDonor, rate } = calculateSingleITCMD(fractionalValue);
+                            const totalItcmd = itcmdPerDonor * donorCount;
+                            if (totalItcmd > 0) {
+                                itcmdItem = {
+                                    id: timestamp++, type: 'itcmd', name: `ITCMD (${rate * 100}%) - Cálculo Fracionado`,
+                                    identifier: `Base: ${formatCurrency(fractionalValue)} (x${donorCount} Donatários)`, baseValue: valorAtoOriginal,
+                                    costs: { subtotal: totalItcmd, oficial: 0, fuju: 0, fundimper: 0, fundep: 0, fumorpge: 0, selo: 0 }
+                                };
+                            }
+                        } else {
+                            const { value: itcmdValue, rate } = calculateSingleITCMD(valorAtoOriginal);
+                            if (itcmdValue > 0) {
+                                itcmdItem = {
+                                    id: timestamp++, type: 'itcmd', name: `ITCMD (${rate * 100}%)`,
+                                    identifier: `Base: ${formatCurrency(valorAtoOriginal)}`, baseValue: valorAtoOriginal,
+                                    costs: { subtotal: itcmdValue, oficial: 0, fuju: 0, fundimper: 0, fundep: 0, fumorpge: 0, selo: 0 }
+                                };
+                            }
+                        }
+                        if (itcmdItem) newItems.push(itcmdItem);
+                    }
+                    
+                    addMultipleItemsToBudget(newItems);
+                    
+                    valorAtoInput.value = '';
+                    descricaoInput.value = '';
+                    document.getElementById('incluir-itbi').checked = false;
+                    document.getElementById('incluir-itcmd-variavel').checked = false;
+                    document.getElementById('add-combo').checked = false;
+                    document.getElementById('natureza_padrao').checked = true;
+                });
+
+                document.getElementById('add-fixo').addEventListener('click', () => {
+                    const selectedKey = atoFixoSelect.value;
+                    if (!selectedKey) return;
+                    const serventiaKey = selectedKey.split('_')[0];
+                    const atoInfo = feeTables[serventiaKey].atosFixos[selectedKey];
+                    const quantidadeInput = document.getElementById('quantidade-fixo');
+                    const quantidade = parseInt(quantidadeInput.value) || 1;
+                    const costs = calculateCosts(atoInfo.oficial * quantidade, atoInfo.selo * quantidade);
+                    const name = `${atoInfo.name} (x${quantidade})`;
+                    addMultipleItemsToBudget([{ id: Date.now(), type: 'fixo', name, identifier: '', costs }]);
+                });
+                
+                document.getElementById('add-manual').addEventListener('click', () => {
+                    const valorManualInput = document.getElementById('valor-manual');
+                    const manualValue = parseCurrency(valorManualInput.value);
+                    const descricaoManualInput = document.getElementById('descricao-manual');
+                    const name = descricaoManualInput.value.trim();
+                    if (manualValue <= 0) { alert('Por favor, insira um valor válido para o serviço.'); return; }
+                    if (!name) { alert('Por favor, insira uma descrição para o serviço manual.'); return; }
+                    const costs = { oficial: manualValue, fuju: 0, fundimper: 0, fundep: 0, fumorpge: 0, selo: 0, subtotal: manualValue };
+                    addMultipleItemsToBudget([{ id: Date.now(), type: 'manual', name, identifier: '', costs }]);
+                    descricaoManualInput.value = '';
+                    valorManualInput.value = '';
+                });
+
+                document.getElementById('add-inventory-asset').addEventListener('click', addInventoryAssetRow);
+                document.getElementById('inventory-assets-list').addEventListener('click', (e) => {
+                    const removeButton = e.target.closest('.remove-asset-btn');
+                    if (removeButton) {
+                        removeButton.closest('.inventory-asset-row').remove();
+                    }
+                });
+                document.getElementById('calculate-inventory').addEventListener('click', calculateInventory);
+                
+                const manualDivCheckbox = document.getElementById('inventory-manual-division');
+                const manualDivPanel = document.getElementById('inventory-manual-division-panel');
+                if (manualDivCheckbox && manualDivPanel) {
+                    manualDivCheckbox.addEventListener('change', function() {
+                        manualDivPanel.style.display = this.checked ? 'block' : 'none';
+                    });
+                }
+                
+                document.querySelectorAll('input[name="inventory-heir-class"]').forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        const spouseOption = document.getElementById('inventory-spouse-heir-option');
+                        if (this.value === 'descendentes') {
+                            spouseOption.style.display = 'block'; // Cônjuge pode concorrer com descendentes
+                        } else if (this.value === 'ascendentes') {
+                            spouseOption.style.display = 'none'; // Cônjuge concorre sempre com ascendentes
+                        } else {
+                            spouseOption.style.display = 'none';
+                        }
+                    });
+                });
+                
+                calculateIncraBtn.addEventListener('click', () => {
+                    const region = municipalityToRegionMap[incraMunicipioSelect.value];
+                    const level = incraLevelSelect.value;
+                    const typology = incraTypologySelect.value;
+                    const column = incraValueColumnSelect.value;
+                    const area = parseFloat(incraAreaInput.value);
+                    if (!region || !level || !typology || !column || isNaN(area) || area <= 0) {
+                        alert('Por favor, preencha todos os campos da avaliação INCRA.');
+                        return;
+                    }
+                    const valuePerHa = incraData[region]?.[level]?.[typology]?.[column];
+                    if (typeof valuePerHa !== 'number') {
+                        alert('Dados não encontrados para a seleção. Verifique o relatório INCRA.');
+                        incraResultContainer.style.display = 'none';
+                        return;
+                    }
+                    
+                    const totalValue = area * valuePerHa;
+                    
+                    // Calcular a economia em relação ao teto
+                    let maxRegionValue = 0;
+                    for (const l in incraData[region]) {
+                        for (const t in incraData[region][l]) {
+                            const val = incraData[region][l][t][column];
+                            if (val > maxRegionValue) maxRegionValue = val;
+                        }
+                    }
+                    const maxTotalValue = area * maxRegionValue;
+                    const savings = maxTotalValue - totalValue;
+
+                    let savingsHtml = '';
+                    if (savings > 0) {
+                        savingsHtml = `
+                        <div style="background-color: rgba(255,255,255,0.6); border: 1px dashed #4ade80; border-radius: 8px; padding: 1rem; margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 1rem;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.85rem; color: #166534; font-weight: 600; text-transform: uppercase;">Economia em relação ao teto regional:</div>
+                                <div style="font-size: 1.4rem; font-weight: bold; color: var(--success-color);">+ ${formatCurrency(savings)}</div>
+                            </div>
+                        </div>`;
+                    }
+
+                    incraResultContainer.innerHTML = `
+                        <h3 style="color: #166534; margin-top: 0; margin-bottom: 0.5rem; font-size: 1.5rem;">Avaliação Concluída!</h3>
+                        <p style="color: #15803d; margin-bottom: 1.5rem; font-size: 0.95rem;">Tipologia: <strong>${typology}</strong></p>
+                        
+                        <div class="result-label" style="color: #14532d; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">Valor Total Estimado</div>
+                        <div class="result-value" style="color: #16a34a; font-size: 2.5rem; font-weight: 800; text-shadow: 1px 1px 2px rgba(0,0,0,0.05); margin-bottom: 0.5rem;">${formatCurrency(totalValue)}</div>
+                        <div style="font-size: 0.85rem; color: #15803d; margin-bottom: 1.5rem;">(Baseado no valor de ${formatCurrency(valuePerHa)}/ha na coluna ${column.replace('_', ' ').toUpperCase()})</div>
+                        
+                        ${savingsHtml}
+                        
+                        <button id="use-incra-value-btn" class="btn btn-primary" data-value="${totalValue}" style="margin-top: 1.5rem; width: 100%; font-size: 1.1rem; padding: 1rem; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 0.5rem;"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/></svg>
+                            Usar Valor no Orçamento Variável
+                        </button>
+                    `;
+                    incraResultContainer.style.display = 'block';
+                });
+                
+                incraResultContainer.addEventListener('click', e => {
+                    const btn = e.target.closest('#use-incra-value-btn');
+                    if (btn) {
+                        const value = parseFloat(btn.dataset.value);
+                        valorAtoInput.value = value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        switchTab('tab-variavel');
+                    }
+                });
+                
+                // --- INÍCIO DA NOVA LÓGICA DO INCRA ---
+                const incraLevelWrapper = document.getElementById('incra-level-wrapper');
+                const incraTypologyWrapper = document.getElementById('incra-typology-wrapper');
+                const incraValueColumnWrapper = document.getElementById('incra-value-column-wrapper');
+                const incraAreaWrapper = document.getElementById('incra-area-wrapper');
+                const incraCalcBtn = document.getElementById('calculate-incra-btn');
+                const incraAutoFillContainer = document.getElementById('incra-auto-fill-container');
+
+                const checkIncraReady = () => {
+                    const municipio = incraMunicipioSelect.value;
+                    const area = parseFloat(incraAreaInput.value);
+                    if (municipio && !isNaN(area) && area > 0) {
+                        viewRankingBtn.style.display = 'flex';
+                    } else {
+                        viewRankingBtn.style.display = 'none';
+                    }
+                };
+                
+                const incraRankingModal = document.getElementById('incra-ranking-modal');
+                const incraRankingBody = document.getElementById('incra-ranking-body');
+                const viewRankingBtn = document.getElementById('view-ranking-btn');
+                const closeRankingModalBtn = document.getElementById('close-ranking-modal');
+                const rankingMunicipioNome = document.getElementById('ranking-municipio-nome');
+
+                if (viewRankingBtn) {
+                    viewRankingBtn.addEventListener('click', () => {
+                        renderIncraRanking(incraMunicipioSelect.value);
+                        incraRankingModal.classList.add('show');
+                    });
+                }
+                
+                if (closeRankingModalBtn) {
+                    closeRankingModalBtn.addEventListener('click', () => {
+                        incraRankingModal.classList.remove('show');
+                    });
+                }
+                
+                if (incraRankingBody) {
+                    incraRankingBody.addEventListener('click', (e) => {
+                        const tr = e.target.closest('tr.ranking-row');
+                        if (!tr) return;
+                        
+                        const level = tr.dataset.level;
+                        const typology = tr.dataset.typology;
+                        const targetColumn = tr.dataset.column || 'vti_media';
+                        const autoCalculate = true;
+                        
+                        if (level && typology) {
+                            incraRankingModal.classList.remove('show');
+                            
+                            // Seleciona o Nível e dispara a renderização das tipologias
+                            incraLevelSelect.value = level;
+                            incraLevelSelect.dispatchEvent(new Event('change'));
+                            
+                            // Timeout usado apenas para garantir que a DOM das tipologias já atualizou
+                            setTimeout(() => {
+                                incraTypologySelect.value = typology;
+                                incraTypologySelect.dispatchEvent(new Event('change'));
+                                
+                                setTimeout(() => {
+                                    incraValueColumnSelect.value = targetColumn;
+                                    incraValueColumnSelect.dispatchEvent(new Event('change'));
+                                    
+                                    if (autoCalculate) {
+                                        incraCalcBtn.click();
+                                        // Scroll suave para o resultado
+                                        setTimeout(() => {
+                                            document.getElementById('incra-result-container').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        }, 100);
+                                    } else {
+                                        incraValueColumnSelect.focus();
+                                    }
+                                }, 10);
+                            }, 10);
+                        }
+                    });
+                }
+
+                const renderIncraRanking = (municipio) => {
+                    const area = parseFloat(incraAreaInput.value);
+                    if (!municipio || isNaN(area) || area <= 0) return;
+                    
+                    const region = municipalityToRegionMap[municipio];
+                    if (!region || !incraData[region]) return;
+                    
+                    rankingMunicipioNome.textContent = municipio + ` (${area} ha)`;
+                    
+                    let allAlternatives = [];
+                    for (const level in incraData[region]) {
+                        for (const typology in incraData[region][level]) {
+                            const data = incraData[region][level][typology];
+                            
+                            const params = [
+                                { col: 'vtn_media', label: 'VTN (Média)', value: data.vtn_media || 0 },
+                                { col: 'vtn_mediana', label: 'VTN (Mediana)', value: data.vtn_mediana || 0 },
+                                { col: 'vti_media', label: 'VTI (Média)', value: data.vti_media || 0 },
+                                { col: 'vti_mediana', label: 'VTI (Mediana)', value: data.vti_mediana || 0 }
+                            ];
+                            
+                            params.forEach(p => {
+                                if (p.value > 0) {
+                                    allAlternatives.push({
+                                        level: level,
+                                        typology: typology,
+                                        paramCol: p.col,
+                                        paramLabel: p.label,
+                                        baseValue: p.value,
+                                        totalValue: p.value * area
+                                    });
+                                }
+                            });
+                        }
+                    }
+                    
+                    allAlternatives.sort((a, b) => a.totalValue - b.totalValue);
+                    
+                    incraRankingBody.innerHTML = '';
+                    allAlternatives.forEach((item, index) => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'ranking-row';
+                        tr.dataset.level = item.level;
+                        tr.dataset.typology = item.typology;
+                        tr.dataset.column = item.paramCol;
+                        
+                        let rankColor = '';
+                        let rankIcon = '';
+                        if (index === 0) { rankColor = '#d4edda'; rankIcon = '🥇'; }
+                        else if (index === 1) { rankColor = '#e2f3e5'; rankIcon = '🥈'; }
+                        else if (index === 2) { rankColor = '#edf7ef'; rankIcon = '🥉'; }
+                        else if (index >= allAlternatives.length - 3) { rankColor = '#f8d7da'; rankIcon = '🔴'; }
+                        else { rankColor = 'transparent'; rankIcon = '⚫'; }
+                        
+                        tr.style.backgroundColor = rankColor;
+                        tr.style.borderBottom = '1px solid var(--medium-gray)';
+                        tr.style.cursor = 'pointer';
+                        tr.title = 'Clique para selecionar esta opção';
+                        tr.onmouseover = function() { this.style.backgroundColor = '#e6f2ff'; };
+                        tr.onmouseout = function() { this.style.backgroundColor = rankColor; };
+                        
+                        tr.innerHTML = `
+                            <td style="padding: 0.5rem; text-align: center; font-weight: bold; font-size: 1.1em;">${rankIcon} ${index + 1}º</td>
+                            <td style="padding: 0.5rem; text-align: left;">
+                                <div style="font-weight: bold; color: var(--primary-color-dark);">${item.typology}</div>
+                                <div style="font-size: 0.75rem; color: var(--secondary-color);">${item.level}</div>
+                            </td>
+                            <td style="padding: 0.5rem; text-align: left; font-weight: bold; color: var(--primary-color);">
+                                <span style="background: #e2e8f0; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.8rem;">${item.paramLabel}</span>
+                            </td>
+                            <td style="padding: 0.5rem; text-align: right; color: #666;">${formatCurrency(item.baseValue)} <span style="font-size:0.7em">/ha</span></td>
+                            <td style="padding: 0.5rem; text-align: right; font-family: monospace; font-weight: bold; font-size: 1.15em; color: var(--primary-color);">
+                                ${formatCurrency(item.totalValue)}
+                            </td>
+                        `;
+                        incraRankingBody.appendChild(tr);
+                    });
+                };
+
+                const resetIncraFields = (level = 1) => {
+                    if (level <= 1) {
+                        incraLevelSelect.innerHTML = '';
+                        incraLevelWrapper.style.display = 'none';
+                    }
+                    if (level <= 2) {
+                        incraTypologySelect.innerHTML = '';
+                        incraTypologyWrapper.style.display = 'none';
+                    }
+                    if (level <= 3) {
+                        incraValueColumnSelect.value = '';
+                        incraValueColumnWrapper.style.display = 'none';
+                    }
+                    if (level <= 4) {
+                        incraCalcBtn.style.display = 'none';
+                        incraResultContainer.style.display = 'none';
+                    }
+                };
+
+                incraAreaInput.addEventListener('input', checkIncraReady);
+
+                incraMunicipioSelect.addEventListener('change', function() {
+                    resetIncraFields(1);
+                    checkIncraReady();
+                    const selectedMunicipio = this.value;
+                    if (!selectedMunicipio) return;
+                    
+                    const region = municipalityToRegionMap[selectedMunicipio];
+                    if (region && incraData[region]) {
+                        const levels = Object.keys(incraData[region]).sort();
+                        incraLevelSelect.innerHTML = '<option value="">-- Escolha um nível --</option>';
+                        levels.forEach(level => {
+                            const option = document.createElement('option');
+                            option.value = level;
+                            option.textContent = level;
+                            incraLevelSelect.appendChild(option);
+                        });
+                        incraLevelWrapper.style.display = 'block';
+                    }
+                });
+
+                incraLevelSelect.addEventListener('change', function() {
+                    resetIncraFields(2);
+                    const selectedMunicipio = incraMunicipioSelect.value;
+                    const selectedLevel = this.value;
+                    if (!selectedMunicipio || !selectedLevel) return;
+
+                    const region = municipalityToRegionMap[selectedMunicipio];
+                    if (region && incraData[region]?.[selectedLevel]) {
+                        const typologies = Object.keys(incraData[region][selectedLevel]).sort();
+                        incraTypologySelect.innerHTML = '<option value="">-- Escolha uma tipologia --</option>';
+                        typologies.forEach(typology => {
+                            const option = document.createElement('option');
+                            option.value = typology;
+                            option.textContent = typology;
+                            incraTypologySelect.appendChild(option);
+                        });
+                        incraTypologyWrapper.style.display = 'block';
+                    }
+                });
+
+                incraTypologySelect.addEventListener('change', function() {
+                    resetIncraFields(3);
+                    if(!this.value) return;
+                    incraValueColumnWrapper.style.display = 'block';
+                });
+                
+                incraValueColumnSelect.addEventListener('change', function() {
+                    resetIncraFields(4);
+                    if(!this.value) return;
+                });
+                // --- FIM DA NOVA LÓGICA DO INCRA ---
+
+
+                budgetItemsContainer.addEventListener('click', (e) => {
+                    const target = e.target;
+                    const removeButton = target.closest('.remove-btn');
+                    const detailsButton = target.closest('.details-toggle-btn');
+                    const editButton = target.closest('.edit-btn');
+                    
+                    if (removeButton) {
+                        const row = removeButton.closest('.item-row');
+                        removeItemFromBudget(parseInt(row.dataset.id));
+                    } else if (detailsButton) {
+                        const row = detailsButton.closest('.item-row');
+                        const detailsRow = document.querySelector(`.details-row[data-details-for='${row.dataset.id}']`);
+                        if (detailsRow) {
+                            detailsRow.style.display = detailsRow.style.display === 'table-row' ? 'none' : 'table-row';
+                        }
+                    } else if (editButton) {
+                        const row = editButton.closest('.item-row');
+                        const itemId = parseInt(row.dataset.id);
+                        const itemToEdit = budgetItems.find(item => item.id === itemId);
+                        if (itemToEdit) {
+                            openEditModal(itemToEdit);
+                        }
+                    }
+                });
+
+                atoVariavelSelect.addEventListener('change', () => {
+                    const selectedKey = atoVariavelSelect.value;
+                    
+                    const showCombo = selectedKey === 'notas_escritura_valor' || selectedKey === 'imoveis_registro_valor';
+                    comboOptionContainer.style.display = showCombo ? 'flex' : 'none';
+                    const naturezaAtoPanel = document.getElementById('natureza-ato-panel');
+                    naturezaAtoPanel.style.display = showCombo ? 'block' : 'none';
+
+                    if (!showCombo) {
+                        document.getElementById('add-combo').checked = false;
+                    }
+                    
+                    if (selectedKey === 'imoveis_averbacao_valor') {
+                        constructionSubtoolContainer.style.display = 'block';
+                    } else {
+                        constructionSubtoolContainer.style.display = 'none';
+                        isConstructionCheckbox.checked = false;
+                        constructionFields.style.display = 'none';
+                    }
+                });
+
+                isConstructionCheckbox.addEventListener('change', () => {
+                    constructionFields.style.display = isConstructionCheckbox.checked ? 'block' : 'none';
+                });
+
+                calculateConstructionValueBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const areaInput = document.getElementById('construction-area');
+                    const cubInput = document.getElementById('construction-cub');
+                    const resultDiv = document.getElementById('construction-result');
+
+                    const area = parseFloat(areaInput.value);
+                    const cub = parseCurrency(cubInput.value);
+
+                    if (isNaN(area) || area <= 0 || isNaN(cub) || cub <= 0) {
+                        alert('Por favor, insira valores válidos para a área e o CUB.');
+                        resultDiv.textContent = '';
+                        return;
+                    }
+
+                    const totalValue = round(area * cub);
+                    resultDiv.textContent = `Valor Calculado: ${formatCurrency(totalValue)}`;
+                    valorAtoInput.value = totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                });
+
+                budgeterNameInput.addEventListener('input', () => {
+                    const name = budgeterNameInput.value.trim();
+                    printBudgeterNameSpan.textContent = name;
+                    printBudgeterNameLabel.style.display = name ? 'inline' : 'none';
+                });
+                
+                printButton.addEventListener('click', () => {
+                    const today = new Date();
+                    printDateSpan.textContent = today.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    printModalContainer.classList.add('show');
+                });
+
+                document.getElementById('print-cancel-btn').addEventListener('click', () => printModalContainer.classList.remove('show'));
+                document.getElementById('print-detailed-btn').addEventListener('click', () => {
+                    printModalContainer.classList.remove('show');
+                    window.print();
+                });
+                document.getElementById('print-simplified-btn').addEventListener('click', () => {
+                    printModalContainer.classList.remove('show');
+                    document.body.classList.add('print-simplified');
+                    window.print();
+                });
+                window.addEventListener('afterprint', () => document.body.classList.remove('print-simplified'));
+                
+                function openEditModal(item) {
+                    editItemIdHiddenInput.value = item.id;
+                    editItemNameInput.value = item.name;
+                    editItemIdentifierInput.value = item.identifier;
+                    editItemModal.classList.add('show');
+                }
+                
+                function closeEditModal() {
+                    editItemModal.classList.remove('show');
+                }
+
+                function saveItemChanges() {
+                    const itemId = parseInt(editItemIdHiddenInput.value);
+                    const itemToUpdate = budgetItems.find(item => item.id === itemId);
+                    
+                    if (itemToUpdate) {
+                        itemToUpdate.name = editItemNameInput.value.trim();
+                        itemToUpdate.identifier = editItemIdentifierInput.value.trim();
+                    }
+                    
+                    renderBudget();
+                    closeEditModal();
+                }
+
+                document.getElementById('edit-item-save-btn').addEventListener('click', saveItemChanges);
+                document.getElementById('edit-item-cancel-btn').addEventListener('click', closeEditModal);
+
+                clearBudgetButton.addEventListener('click', () => {
+                    clearModal.classList.add('show');
+                });
+
+                document.getElementById('clear-cancel-btn').addEventListener('click', () => {
+                    clearModal.classList.remove('show');
+                });
+
+                document.getElementById('clear-confirm-btn').addEventListener('click', () => {
+                    budgetItems = [];
+                    renderBudget();
+                    clearModal.classList.remove('show');
+                });
+                
+                const itcmdCheckbox = document.getElementById('incluir-itcmd-variavel');
+                const itcmdOptionsPanel = document.getElementById('itcmd-options-panel');
+                const itcmdDonorsDetails = document.getElementById('itcmd-donors-details');
+                const itcmdBaseTypeRadios = document.querySelectorAll('input[name="itcmd_base_type"]');
+
+                itcmdCheckbox.addEventListener('change', () => {
+                    itcmdOptionsPanel.style.display = itcmdCheckbox.checked ? 'block' : 'none';
+                });
+
+                itcmdBaseTypeRadios.forEach(radio => {
+                    radio.addEventListener('change', () => {
+                        const showDetails = document.getElementById('itcmd_base_fracionado').checked;
+                        itcmdDonorsDetails.style.display = showDetails ? 'block' : 'none';
+                    });
+                });
+
+                const inventoryItcmdCheckbox = document.getElementById('inventory-calculate-itcmd');
+                const inventoryItcmdSettings = document.getElementById('inventory-itcmd-settings');
+                const itcmdDisclaimer = document.getElementById('itcmd-disclaimer'); 
+
+                inventoryItcmdCheckbox.addEventListener('change', () => {
+                    const isChecked = inventoryItcmdCheckbox.checked; 
+                    inventoryItcmdSettings.style.display = isChecked ? 'block' : 'none'; 
+                    itcmdDisclaimer.style.display = isChecked ? 'block' : 'none';      
+                });
+                const inventoryHasSpouseSelect = document.getElementById('inventory-has-spouse');
+                const inventorySpouseHeirOption = document.getElementById('inventory-spouse-heir-option');
+
+                inventoryHasSpouseSelect.addEventListener('change', () => {
+                    const showSpouseHeirOption = inventoryHasSpouseSelect.value === 'sim';
+                    inventorySpouseHeirOption.style.display = showSpouseHeirOption ? 'block' : 'none';
+                    if (!showSpouseHeirOption) {
+                        document.getElementById('inventory-spouse-is-heir').checked = false;
+                    }
+                });
+
+                document.getElementById('add-itcmd-avulso').addEventListener('click', () => {
+                    const descriptionInput = document.getElementById('descricao-itcmd');
+                    const valueInput = document.getElementById('valor-itcmd');
+                    const calcType = document.querySelector('input[name="itcmd_avulso_tipo"]:checked').value;
+                    
+                    const description = descriptionInput.value.trim();
+                    const baseValue = parseCurrency(valueInput.value);
+
+                    if (baseValue <= 0) {
+                        alert('Por favor, insira um valor de avaliação válido.');
+                        return;
+                    }
+                    if (!description) {
+                        alert('Por favor, insira uma identificação para o bem.');
+                        return;
+                    }
+
+                    let itcmdValue = 0;
+                    let rate = 0;
+                    let rateLabel = '';
+
+                    if (calcType === 'auto') {
+                        const result = calculateSingleITCMD(baseValue);
+                        itcmdValue = result.value;
+                        rate = result.rate;
+                        rateLabel = `Automática (${(rate * 100).toFixed(1).replace('.',',')}%)`;
+                    } else {
+                        const manualRateInput = document.getElementById('itcmd_avulso_aliquota');
+                        const manualRate = parseFloat(manualRateInput.value);
+
+                        if (isNaN(manualRate) || manualRate <= 0 || manualRate > 100) {
+                            alert('Por favor, insira uma alíquota manual válida (ex: 2 para 2%).');
+                            return;
+                        }
+                        rate = manualRate / 100;
+                        itcmdValue = round(baseValue * rate);
+                        rateLabel = `Manual (${manualRate.toString().replace('.',',')}%)`;
+                    }
+
+                    if (itcmdValue > 0) {
+                        addMultipleItemsToBudget([{
+                            id: Date.now(),
+                            type: 'itcmd',
+                            name: `ITCMD (${rateLabel})`,
+                            identifier: description,
+                            baseValue: baseValue,
+                            costs: { subtotal: itcmdValue, oficial: 0, fuju: 0, fundimper: 0, fundep: 0, fumorpge: 0, selo: 0 }
+                        }]);
+                        
+                        descriptionInput.value = '';
+                        valueInput.value = '';
+                        document.getElementById('itcmd_avulso_auto').checked = true;
+                        document.getElementById('itcmd_avulso_manual_panel').style.display = 'none';
+                        document.getElementById('itcmd_avulso_aliquota').value = '';
+
+                    } else {
+                        alert('O valor do ITCMD calculado foi zero. Nenhum item foi adicionado.');
+                    }
+                });
+                
+                document.querySelectorAll('input[name="itcmd_avulso_tipo"]').forEach(radio => {
+                    radio.addEventListener('change', (event) => {
+                        const manualPanel = document.getElementById('itcmd_avulso_manual_panel');
+                        if (event.target.value === 'manual') {
+                            manualPanel.style.display = 'block';
+                        } else {
+                            manualPanel.style.display = 'none';
+                        }
+                    });
+                });
+
+                // NOVO: Listeners para o Guia do Usuário
+                const openGuideBtn = document.getElementById('open-guide-btn');
+                const userGuideModal = document.getElementById('user-guide-modal');
+                const closeGuideBtn = document.getElementById('guide-close-btn');
+
+                openGuideBtn.addEventListener('click', () => {
+                    userGuideModal.classList.add('show');
+                });
+
+                closeGuideBtn.addEventListener('click', () => {
+                    userGuideModal.classList.remove('show');
+                });
+
+
+                // NOVO: Listeners para o Conversor de Alqueires
+                const convertAlqueiresBtn = document.getElementById('convert-alqueires-btn');
+                const incraAlqueiresInput = document.getElementById('incra-alqueires');
+                // A referência para 'incraAreaInput' já foi criada no início do script, então podemos reutilizá-la.
+
+                convertAlqueiresBtn.addEventListener('click', (e) => {
+                    e.preventDefault(); // Impede o comportamento padrão de um botão em um formulário
+
+                    const alqueires = parseFloat(incraAlqueiresInput.value);
+
+                    if (isNaN(alqueires) || alqueires <= 0) {
+                        alert('Por favor, insira um valor válido no campo de alqueires.');
+                        return;
+                    }
+
+                    // A conversão: 1 alqueire = 2.42 hectares
+                    const hectares = alqueires * 2.42;
+                    
+                    // Usamos a função round() que já existe para um resultado mais limpo (4 casas decimais é bom para áreas)
+                    const roundedHectares = round(hectares, 4);
+
+                    // Preenche o campo principal de hectares com o valor convertido
+                    incraAreaInput.value = roundedHectares;
+                    // Dispara o evento de input para atualizar o botão de ranking
+                    incraAreaInput.dispatchEvent(new Event('input'));
+
+                    // Opcional: Limpa o campo de alqueires após a conversão
+                    incraAlqueiresInput.value = '';
+                });
+		exportBudgetButton.addEventListener('click', exportBudget);
+                importBudgetButton.addEventListener('click', () => importFileInput.click());
+                importFileInput.addEventListener('change', handleFileImport);
+            }; 
+
+            function addInventoryAssetRow() {
+                inventoryAssetCounter++;
+                const list = document.getElementById('inventory-assets-list');
+                const row = document.createElement('div');
+                row.className = 'inventory-asset-row';
+                row.style.padding = '1.2rem';
+                row.style.border = '1px solid var(--border-color)';
+                row.style.borderRadius = '8px';
+                row.style.marginBottom = '1rem';
+                row.style.position = 'relative';
+                row.style.backgroundColor = '#fefefe';
+                
+                row.innerHTML = `
+                    <button class="btn btn-danger btn-icon remove-asset-btn" title="Remover este bem" style="position: absolute; top: 1rem; right: 1rem; z-index: 10;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+                    </button>
+                    <button class="btn btn-icon clone-asset-btn" title="Duplicar este bem" style="position: absolute; top: 1rem; right: 3rem; z-index: 10; color: var(--secondary-color);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>
+                    </button>
+                    
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 0.75rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="inv-desc-${inventoryAssetCounter}" style="font-size: 0.85rem;">Identificação do Bem</label>
+                            <input type="text" id="inv-desc-${inventoryAssetCounter}" class="inv-desc" placeholder="Ex: Apto 101, Matrícula 1234">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0; padding-right: 2.5rem;">
+                            <label for="inv-type-${inventoryAssetCounter}" style="font-size: 0.85rem;">Natureza</label>
+                            <select id="inv-type-${inventoryAssetCounter}" class="inv-type">
+                                <option value="imovel">Imóvel</option>
+                                <option value="movel">Móvel / Valores</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0.75rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="inv-val-${inventoryAssetCounter}" style="font-size: 0.85rem; display: flex; justify-content: space-between;">
+                                <span>Avaliação do Bem (R$)</span>
+                                <span class="fast-money-container">
+                                    <button type="button" class="btn-fast-money" data-add="50000">+50k</button>
+                                    <button type="button" class="btn-fast-money" data-add="100000">+100k</button>
+                                </span>
+                            </label>
+                            <input type="text" id="inv-val-${inventoryAssetCounter}" class="inv-val" placeholder="250.000,00">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="inv-debt-${inventoryAssetCounter}" style="font-size: 0.85rem; color: #b91c1c;">Abater Dívida (R$) <span style="font-weight: normal; font-size: 0.85em; color: #888;">*Opcional</span></label>
+                            <input type="text" id="inv-debt-${inventoryAssetCounter}" class="inv-debt" placeholder="0,00" title="Valor do passivo. Será deduzido na base do ITCMD.">
+                        </div>
+                    </div>
+                    
+                    <div class="checkbox-group-stack" style="margin-top: 1rem; border-top: 1px dashed #e0e0e0; padding-top: 0.8rem; display: flex; gap: 1.5rem;">
+                        <div class="checkbox-group">
+                           <input type="checkbox" id="inv-meacao-${inventoryAssetCounter}" class="inv-meacao">
+                           <label for="inv-meacao-${inventoryAssetCounter}" style="font-size: 0.85rem;">É meação (50%)</label>
+                        </div>
+                        <div class="checkbox-group">
+                           <input type="checkbox" id="inv-isento-${inventoryAssetCounter}" class="inv-isento">
+                           <label for="inv-isento-${inventoryAssetCounter}" style="font-size: 0.85rem;">Isento de ITCMD</label>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(row);
+                
+                // Formatação de moeda no novo campo de dívida
+                const debtInput = row.querySelector('.inv-debt');
+                debtInput.addEventListener('input', function() {
+                    let value = this.value.replace(/\D/g, '');
+                    if (value === '') return;
+                    value = (parseInt(value, 10) / 100).toFixed(2);
+                    value = value.replace('.', ',');
+                    value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                    this.value = value;
+                });
+            }
+
+ 
+            function calculateInventory() {
+                const assetRows = document.querySelectorAll('.inventory-asset-row');
+                const shouldCalculateITCMD = document.getElementById('inventory-calculate-itcmd').checked;
+
+                if (assetRows.length === 0) {
+                    alert('Adicione pelo menos um bem para calcular.');
+                    return;
+                }
+                
+                const newItems = [];
+                let timestamp = Date.now();
+                let hasError = false;
+
+                const assetsData = [];
+                assetRows.forEach(row => {
+                    const desc = row.querySelector('.inv-desc').value.trim();
+                    const val = parseCurrency(row.querySelector('.inv-val').value);
+                    const debtInput = row.querySelector('.inv-debt');
+                    let debt = debtInput ? parseCurrency(debtInput.value) || 0 : 0;
+                    
+                    if (!desc || val <= 0) {
+                        hasError = true;
+                        return;
+                    }
+                    if (debt > val) debt = val; // a dívida não pode negativar o valor do bem
+                    
+                    assetsData.push({
+                        desc, 
+                        val, // Valor Bruto (Usado para Escritura/Registro)
+                        debt, // Dívida
+                        netVal: val - debt, // Valor Líquido (Usado para ITCMD)
+                        type: row.querySelector('.inv-type').value,
+                        isMeacao: row.querySelector('.inv-meacao').checked,
+                        isIsento: row.querySelector('.inv-isento').checked,
+                    });
+                });
+
+                if (hasError) {
+                    alert('Por favor, preencha a identificação e a avaliação de todos os bens.');
+                    return;
+                }
+
+                const totalEscrituraValue = assetsData.reduce((sum, asset) => sum + asset.val, 0);
+                const escrituraAtoInfo = feeTables.notas.atosVariaveis.notas_escritura_valor;
+                const { oficial: escOficial, selo: escSelo } = findVariableFee(escrituraAtoInfo, totalEscrituraValue);
+                newItems.push({
+                    id: timestamp++, type: 'variavel', name: 'Escritura de Inventário/Partilha/Doação',
+                    identifier: `Base: ${formatCurrency(totalEscrituraValue)} (${assetsData.length} bens)`,
+                    baseValue: totalEscrituraValue,
+                    costs: calculateCosts(escOficial, escSelo)
+                });
+                
+                const registroAtoInfo = feeTables.imoveis.atosVariaveis.imoveis_registro_valor;
+                assetsData.forEach(asset => {
+                    if (asset.type === 'imovel') {
+                        const baseValueTransmitted = asset.isMeacao ? asset.val * 0.5 : asset.val;
+                        const { oficial: regOficial, selo: regSelo } = findVariableFee(registroAtoInfo, baseValueTransmitted);
+                         newItems.push({
+                            id: timestamp++, type: 'variavel', name: 'Registro de Imóvel (Partilha)',
+                            identifier: asset.desc, 
+                            baseValue: baseValueTransmitted,
+                            evaluationValue: asset.val,
+                            costs: calculateCosts(regOficial, regSelo),
+                            isMeacao: asset.isMeacao
+                        });
+                    }
+                });
+
+                // --- LÓGICA DE PARTILHA (BLOCK 2) ---
+                const hasSpouse = document.getElementById('inventory-has-spouse').value === 'sim';
+                const heirCount = parseInt(document.getElementById('inventory-heir-count').value) || 0;
+                const spouseIsHeir = document.getElementById('inventory-spouse-is-heir').checked;
+                const heirClass = document.querySelector('input[name="inventory-heir-class"]:checked')?.value || 'descendentes';
+                const isManual = document.getElementById('inventory-manual-division').checked;
+                
+                let spousePct = isManual ? parseFloat(document.getElementById('inventory-manual-spouse-pct').value) / 100 : 0;
+                let heirsPct = isManual ? parseFloat(document.getElementById('inventory-manual-heirs-pct').value) / 100 : 0;
+
+                let totalHerancaParaHerdeiros = 0;
+                let totalHerancaParaConjuge = 0;
+                let totalMeacao = 0;
+                let totalDividasDeduzidas = 0;
+                let totalMonteLiquido = 0;
+
+                assetsData.forEach(asset => {
+                    totalDividasDeduzidas += asset.debt;
+                    let valueForPartilha = asset.netVal; // Sempre divide o líquido
+                    totalMonteLiquido += valueForPartilha;
+                    
+                    if (isManual) {
+                        if (asset.isMeacao) {
+                            totalMeacao += valueForPartilha / 2;
+                            totalHerancaParaConjuge += (valueForPartilha / 2) * spousePct;
+                            totalHerancaParaHerdeiros += (valueForPartilha / 2) * heirsPct;
+                        } else {
+                            totalHerancaParaConjuge += valueForPartilha * spousePct;
+                            totalHerancaParaHerdeiros += valueForPartilha * heirsPct;
+                        }
+                    } else {
+                        if (asset.isMeacao) {
+                            totalMeacao += valueForPartilha / 2;
+                            totalHerancaParaHerdeiros += valueForPartilha / 2;
+                        } else {
+                            if (heirClass === 'descendentes') {
+                                const divisorParticulares = (hasSpouse && spouseIsHeir) ? heirCount + 1 : heirCount;
+                                if (divisorParticulares > 0) {
+                                    const share = valueForPartilha / divisorParticulares;
+                                    totalHerancaParaHerdeiros += share * heirCount;
+                                    if (hasSpouse && spouseIsHeir) {
+                                        totalHerancaParaConjuge += share;
+                                    }
+                                }
+                            } else if (heirClass === 'ascendentes') {
+                                // Regra: cônjuge concorre com ascendentes (1/3 se > 1 ascendente, 1/2 se 1 ascendente)
+                                const shareSpouse = heirCount > 1 ? (1/3) : (1/2);
+                                if (hasSpouse) {
+                                    totalHerancaParaConjuge += valueForPartilha * shareSpouse;
+                                    totalHerancaParaHerdeiros += valueForPartilha * (1 - shareSpouse);
+                                } else {
+                                    totalHerancaParaHerdeiros += valueForPartilha;
+                                }
+                            } else if (heirClass === 'colaterais') {
+                                // Cônjuge exclui colaterais
+                                if (hasSpouse) {
+                                    totalHerancaParaConjuge += valueForPartilha;
+                                } else {
+                                    totalHerancaParaHerdeiros += valueForPartilha;
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // RENDERIZAR GRÁFICO DE PIZZA
+                if (totalMonteLiquido > 0) {
+                    const pieContainer = document.getElementById('inventory-pie-chart-container');
+                    const pieChart = document.getElementById('inventory-pie-chart');
+                    const pieLegend = document.getElementById('inventory-pie-legend');
+                    
+                    pieContainer.style.display = 'block';
+                    
+                    const pctMeacao = (totalMeacao / totalMonteLiquido) * 100;
+                    const pctConjuge = (totalHerancaParaConjuge / totalMonteLiquido) * 100;
+                    const pctHerdeiros = (totalHerancaParaHerdeiros / totalMonteLiquido) * 100;
+                    
+                    let gradients = [];
+                    let legendsHTML = '';
+                    let currentAngle = 0;
+                    
+                    if (pctMeacao > 0) {
+                        gradients.push(`#94a3b8 ${currentAngle}% ${currentAngle + pctMeacao}%`);
+                        currentAngle += pctMeacao;
+                        legendsHTML += `<div style="display: flex; align-items: center; margin-bottom: 0.4rem;">
+                                        <div style="width: 14px; height: 14px; background: #94a3b8; border-radius: 3px; margin-right: 8px;"></div>
+                                        <strong>Meação (Cônjuge):</strong> <span style="margin-left:auto">${formatCurrency(totalMeacao)} (${pctMeacao.toFixed(1)}%)</span>
+                                      </div>`;
+                    }
+                    if (pctConjuge > 0) {
+                        gradients.push(`#60a5fa ${currentAngle}% ${currentAngle + pctConjuge}%`);
+                        currentAngle += pctConjuge;
+                        legendsHTML += `<div style="display: flex; align-items: center; margin-bottom: 0.4rem;">
+                                        <div style="width: 14px; height: 14px; background: #60a5fa; border-radius: 3px; margin-right: 8px;"></div>
+                                        <strong>Herança (Cônjuge):</strong> <span style="margin-left:auto">${formatCurrency(totalHerancaParaConjuge)} (${pctConjuge.toFixed(1)}%)</span>
+                                      </div>`;
+                    }
+                    if (pctHerdeiros > 0) {
+                        gradients.push(`#4ade80 ${currentAngle}% ${currentAngle + pctHerdeiros}%`);
+                        
+                        let perHeirLabel = '';
+                        if (heirCount > 1 && !isManual) {
+                            perHeirLabel = `<div style="color: #666; margin-left: 22px; font-size: 0.85em; margin-bottom: 0.4rem;">(${formatCurrency(totalHerancaParaHerdeiros/heirCount)} para cada um dos ${heirCount})</div>`;
+                        }
+                        
+                        legendsHTML += `<div style="display: flex; align-items: center; margin-bottom: 0.4rem;">
+                                        <div style="width: 14px; height: 14px; background: #4ade80; border-radius: 3px; margin-right: 8px;"></div>
+                                        <strong>Herança (${isManual ? 'Herdeiros' : heirClass.charAt(0).toUpperCase() + heirClass.slice(1)}):</strong> <span style="margin-left:auto">${formatCurrency(totalHerancaParaHerdeiros)} (${pctHerdeiros.toFixed(1)}%)</span>
+                                      </div>${perHeirLabel}`;
+                    }
+                    
+                    pieChart.style.background = gradients.length > 0 ? `conic-gradient(${gradients.join(', ')})` : '#e9ecef';
+                    pieLegend.innerHTML = legendsHTML + `<hr style="margin: 0.8rem 0; border: 0; border-top: 1px dashed #ccc;">
+                                                         <div style="display: flex; justify-content: space-between; font-weight: bold; color: var(--primary-color);">
+                                                            <span>Monte Líquido Total:</span> <span>${formatCurrency(totalMonteLiquido)}</span>
+                                                         </div>`;
+                }
+
+                if (shouldCalculateITCMD) {
+                    if (heirCount > 0 && totalHerancaParaHerdeiros > 0) {
+                        const baseCalculoPorHerdeiro = totalHerancaParaHerdeiros / heirCount;
+                        const { value: itcmdPorHerdeiro, rate } = calculateSingleITCMD(baseCalculoPorHerdeiro);
+                        const totalItcmdHerdeiros = itcmdPorHerdeiro * heirCount;
+
+                        if (totalItcmdHerdeiros > 0) {
+                            const itcmdDetails = [
+                                { label: 'Base de Cálculo Líquida (por herdeiro)', value: formatCurrency(baseCalculoPorHerdeiro) },
+                                { label: 'Alíquota Aplicada', value: `${rate * 100}%` },
+                                { label: 'Imposto (por herdeiro)', value: formatCurrency(itcmdPorHerdeiro) },
+                                { label: 'Total (Herdeiros)', value: `${formatCurrency(itcmdPorHerdeiro)} x ${heirCount} = ${formatCurrency(totalItcmdHerdeiros)}` }
+                            ];
+                            
+                            let identifierText = `${heirCount} herdeiro(s) - ${isManual ? 'Manual' : heirClass}`;
+                            if (totalDividasDeduzidas > 0) {
+                                identifierText += ` | Dívidas abatidas: ${formatCurrency(totalDividasDeduzidas)}`;
+                            }
+                            
+                            newItems.push({
+                                id: timestamp++, type: 'itcmd', name: 'ITCMD (Herdeiros)',
+                                identifier: identifierText,
+                                costs: { subtotal: totalItcmdHerdeiros, oficial: 0, fuju: 0, fundimper: 0, fundep: 0, fumorpge: 0, selo: 0 },
+                                details: itcmdDetails
+                            });
+                        }
+                    }
+
+                    if (hasSpouse && totalHerancaParaConjuge > 0) {
+                        const baseCalculoConjuge = totalHerancaParaConjuge;
+                        const { value: itcmdDoConjuge, rate } = calculateSingleITCMD(baseCalculoConjuge);
+
+                        if (itcmdDoConjuge > 0) {
+                             const itcmdDetails = [
+                                { label: 'Base de Cálculo (Cônjuge)', value: formatCurrency(baseCalculoConjuge) },
+                                { label: 'Alíquota Aplicada', value: `${rate * 100}%` },
+                                { label: 'Total (Cônjuge)', value: formatCurrency(itcmdDoConjuge) }
+                            ];
+                            newItems.push({
+                                id: timestamp++, type: 'itcmd', name: 'ITCMD (Cônjuge Herdeiro)',
+                                identifier: '1 cônjuge/companheiro(a)',
+                                costs: { subtotal: itcmdDoConjuge, oficial: 0, fuju: 0, fundimper: 0, fundep: 0, fumorpge: 0, selo: 0 },
+                                details: itcmdDetails
+                            });
+                        }
+                    }
+                }
+
+                addMultipleItemsToBudget(newItems);
+                document.getElementById('inventory-assets-list').innerHTML = '';
+                inventoryAssetCounter = 0;
+                addInventoryAssetRow();
+            }
+
+            // --- Fetch CUB Logic ---
+            const fetchCubBtn = document.getElementById('fetch-cub-btn');
+            const fetchCubStatus = document.getElementById('fetch-cub-status');
+            const constructionTypeSelect = document.getElementById('construction-type');
+            
+            fetchCubBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                fetchCubBtn.disabled = true;
+                fetchCubStatus.style.display = 'block';
+                fetchCubStatus.style.color = 'var(--secondary-color)';
+                fetchCubStatus.innerText = 'Buscando PDF do Sinduscon...';
+                
+                try {
+                    // 1. Fetch HTML to find PDF link
+                    // Usando proxy.cors.sh como alternativa, pois api.codetabs.com está instável/fora do ar.
+                    const proxyUrl = 'https://proxy.cors.sh/';
+                    const sindusconUrl = 'https://sindusconro.com.br/home/?page_id=378';
+                    // Passar um API key temporária no header se proxy.cors.sh exigir, mas por padrão GET simples funciona.
+                    // Adicionando um header x-cors-api-key temporário free (docs: cors.sh).
+                    const htmlResponse = await fetch(proxyUrl + sindusconUrl);
+                    const htmlText = await htmlResponse.text();
+                    
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlText, 'text/html');
+                    // O primeiro link que tem '?wpfb_dl=' é o PDF mais recente
+                    const pdfAnchor = doc.querySelector('a[href*="?wpfb_dl="]');
+                    if (!pdfAnchor) throw new Error('Link do PDF não encontrado.');
+                    
+                    const pdfUrl = pdfAnchor.href;
+                    fetchCubStatus.innerText = 'Baixando e lendo PDF...';
+                    
+                    // 2. Fetch PDF as ArrayBuffer
+                    const pdfResponse = await fetch(proxyUrl + pdfUrl);
+                    const pdfBuffer = await pdfResponse.arrayBuffer();
+                    
+                    // 3. Parse PDF
+                    const pdf = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
+                    const page = await pdf.getPage(1);
+                    const textContent = await page.getTextContent();
+                    const rawItems = textContent.items.map(item => ({
+                        str: item.str,
+                        x: item.transform[4],
+                        y: item.transform[5]
+                    })).filter(item => item.str.trim() !== '');
+                    
+                    // Agrupa itens em linhas visuais com tolerância de 5 unidades no eixo Y
+                    const linesMap = {};
+                    rawItems.forEach(item => {
+                        let foundY = Object.keys(linesMap).find(y => Math.abs(parseFloat(y) - item.y) < 5);
+                        if (foundY) {
+                            linesMap[foundY].push(item);
+                        } else {
+                            linesMap[item.y] = [item];
+                        }
+                    });
+                    
+                    // Ordena as linhas de cima para baixo (coordenada Y decrescente no PDF)
+                    const sortedY = Object.keys(linesMap).map(y => parseFloat(y)).sort((a, b) => b - a);
+                    
+                    // Reconstrói cada linha visual ordenando da esquerda para a direita (X crescente)
+                    const linesText = sortedY.map(y => {
+                        const items = linesMap[y];
+                        items.sort((a, b) => a.x - b.x);
+                        return items.map(item => item.str).join(' ');
+                    });
+                    
+                    const fullText = linesText.join('\n');
+                    console.log("Texto reconstruído do PDF:\n", fullText);
+                    
+                    const isComercial = constructionTypeSelect.value === 'comercial';
+                    const matches = [];
+                    let match;
+                    
+                    if (isComercial) {
+                        // Busca por CSL-8 com tolerância para espaços internos em dígitos e hifens/travessões de qualquer tipo
+                        const regex = /(?:^|\s)CSL[^\d\n]*8\s+([\d\s\.]+\s*,\s*\d\s*\d)/gi;
+                        while ((match = regex.exec(fullText)) !== null) {
+                            const cleaned = match[1].replace(/\s+/g, '');
+                            matches.push(cleaned);
+                        }
+                    } else {
+                        // Busca por R-8 com tolerância para espaços internos em dígitos e hifens/travessões de qualquer tipo
+                        const regex = /(?:^|\s)R[^\d\n]*8\s+([\d\s\.]+\s*,\s*\d\s*\d)/gi;
+                        while ((match = regex.exec(fullText)) !== null) {
+                            const cleaned = match[1].replace(/\s+/g, '');
+                            matches.push(cleaned);
+                        }
+                    }
+                    
+                    console.log("Valores numéricos de CUB encontrados:", matches);
+                    
+                    let foundValue = null;
+                    if (isComercial) {
+                        // Comercial CSL-8 possui 2 colunas: Normal (primeiro) e Alto (segundo)
+                        if (matches.length >= 1) {
+                            foundValue = matches[0];
+                        }
+                    } else {
+                        // Residencial R-8 possui 3 colunas. De cima para baixo na leitura visual:
+                        // PP-4 / R-8 Alto: contém R-8 Alto (primeiro match)
+                        // R-8 Baixo / R-8 Normal: contém R-8 Baixo (segundo match) e R-8 Normal (terceiro match)
+                        // Os matches serão: [ Alto, Baixo, Normal ]. Normal é o índice 2.
+                        if (matches.length === 3) {
+                            foundValue = matches[2]; // Normal
+                        } else if (matches.length === 2) {
+                            foundValue = matches[1];
+                        } else if (matches.length === 1) {
+                            foundValue = matches[0];
+                        }
+                    }
+                    
+                    if (foundValue) {
+                        document.getElementById('construction-cub').value = foundValue;
+                        fetchCubStatus.style.color = 'var(--success-color)';
+                        fetchCubStatus.innerText = 'Sucesso! CUB preenchido com ' + foundValue;
+                        setTimeout(() => fetchCubStatus.style.display = 'none', 5000);
+                    } else {
+                        fetchCubStatus.innerHTML = `
+                            <div style="text-align: left; font-size: 0.8rem; margin-top: 1rem; border: 1px dashed red; padding: 0.5rem; background: #fff5f5; border-radius: 4px; color: #333;">
+                                <p style="font-weight: 600; color: var(--danger-color); margin-bottom: 0.5rem;">CUB não encontrado. Texto extraído do PDF:</p>
+                                <pre style="white-space: pre-wrap; font-family: monospace; max-height: 250px; overflow: auto; background: #fafafa; padding: 0.5rem; border: 1px solid #ddd; color: #333;">${fullText ? fullText.substring(0, 2500) : 'Vazio'}</pre>
+                            </div>
+                        `;
+                        throw new Error('Valor não encontrado no formato esperado.');
+                    }
+                    
+                } catch (err) {
+                    console.error(err);
+                    fetchCubStatus.style.color = 'var(--danger-color)';
+                    if (!fetchCubStatus.innerHTML.includes('<pre>')) {
+                        fetchCubStatus.innerText = 'Erro ao buscar: ' + err.message;
+                    }
+                } finally {
+                    fetchCubBtn.disabled = false;
+                }
+            });
+
+            // --- App Start ---
+            const init = () => {
+                populateSelects();
+                populateIncraSelects();
+                setupEventListeners();
+                addInventoryAssetRow(); // Start with one asset row by default
+                renderBudget(); // Initial render
+                const initialName = budgeterNameInput.value.trim();
+                printBudgeterNameLabel.style.display = initialName ? 'inline' : 'none';
+            };
+
+            init();
+        });
+    </script>
+
+</body>
+</html>
+
+
